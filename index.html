@@ -541,7 +541,16 @@ function cargarLocal(id){
 
 function syncFirebase(){
   if(!fbEnabled || !alumno) return;
-  db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData});
+  db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData})
+    .then(()=>{
+      document.getElementById('syncBadge').textContent = '● Firebase conectado';
+      document.getElementById('syncBadge').style.color = '';
+    })
+    .catch(err=>{
+      console.error('Error guardando en Firebase:', err);
+      document.getElementById('syncBadge').textContent = '⚠ No se pudo guardar en la nube (revisa reglas/autenticación)';
+      document.getElementById('syncBadge').style.color = 'var(--coral)';
+    });
 }
 
 function cargarTodosParaProfesor(cb){
@@ -667,8 +676,14 @@ function loginAlumno(){
         const remoto = snap.val();
         if(remoto && remoto.retos) misRetosData = remoto.retos;
         continuar();
-      }).catch(continuar);
-    }).catch(continuar);
+      }).catch(err=>{
+        console.error('Error leyendo de Firebase:', err);
+        continuar();
+      });
+    }).catch(err=>{
+      console.error('Error de autenticación anónima en Firebase:', err);
+      continuar();
+    });
   } else {
     continuar();
   }
@@ -797,6 +812,12 @@ function renderAlumno(){
       btn.textContent='Marcar como completado';
       btn.onclick=()=>abrirModal(reto.id);
       div.appendChild(btn);
+      const btnQuitar = document.createElement('button');
+      btnQuitar.className='btn btn-ghost btn-sm';
+      btnQuitar.style.marginLeft='8px';
+      btnQuitar.textContent='Quitar';
+      btnQuitar.onclick=()=>quitarReto(reto.id);
+      div.appendChild(btnQuitar);
     }
     misCont.appendChild(div);
   });
@@ -825,6 +846,12 @@ function renderAlumno(){
 
 function elegirReto(id){
   misRetosData[id] = {estado:'elegido', fecha: new Date().toISOString()};
+  guardarLocal(); syncFirebase(); renderAlumno();
+}
+
+function quitarReto(id){
+  if(!confirm('¿Quitar este reto de tu lista?')) return;
+  delete misRetosData[id];
   guardarLocal(); syncFirebase(); renderAlumno();
 }
 
