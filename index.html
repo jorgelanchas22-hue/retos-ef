@@ -60,6 +60,8 @@ label{font-size:12px;color:var(--slate);text-transform:uppercase;letter-spacing:
 .progress-bar{height:8px;border-radius:8px;background:var(--navy-2);overflow:hidden;margin:8px 0 20px;}
 .progress-fill{height:100%;background:var(--lime);}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-size:13px;box-shadow:0 4px 20px rgba(0,0,0,0.15);z-index:100;max-width:90vw;text-align:center;opacity:0;pointer-events:none;transition:opacity .25s;}
+.toast.show{opacity:1;}
 .modal{background:var(--navy-2);border-radius:16px;padding:24px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;}
 .check-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
 .check-row input{width:auto;margin:0;}
@@ -280,6 +282,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
             </div>
           </div>
           <p class="small">Criterio 2 · Calidad/constancia: % de los retos validados con evidencia completa (foto o comentario + adulto validador).</p>
+          <p class="small" style="color:var(--coral);font-weight:600;">Nota: los retos de Nutrición cuentan como máximo 2 puntos en el Criterio 1, aunque el alumno acumule más. El resto de los puntos debe salir de retos de Condición Física o Deporte.</p>
         </div>
         <div class="filters">
           <button class="btn btn-ghost btn-sm" onclick="exportGradesCSV()">Exportar notas CSV</button>
@@ -344,6 +347,7 @@ Juan López Ruiz
 </div>
 
 <!-- MODAL EVIDENCIA -->
+<div id="toast" class="toast"></div>
 <div id="modalEvidencia" class="modal-bg hidden">
   <div class="modal">
     <h3 style="margin-top:0;">Registrar evidencia</h3>
@@ -543,8 +547,8 @@ function cargarLocal(id){
 }
 
 function syncFirebase(){
-  if(!fbEnabled || !alumno) return;
-  db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData})
+  if(!fbEnabled || !alumno) return Promise.resolve();
+  return db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData})
     .then(()=>{
       document.getElementById('syncBadge').textContent = '● Firebase conectado';
       document.getElementById('syncBadge').style.color = '';
@@ -665,6 +669,7 @@ function loginAlumno(){
   const id = slug(nombre,curso,clase);
   alumno = {id, nombre, curso, clase};
   misRetosData = cargarLocal(id);
+  localStorage.setItem('retosEF_sesion', JSON.stringify({nombre, curso, clase}));
 
   function continuar(){
     document.getElementById('viewLogin').classList.add('hidden');
@@ -751,6 +756,7 @@ function guardarTrimestreActivoUI(){
 
 function logout(){
   alumno = null; esProfesor = false; misRetosData = {};
+  localStorage.removeItem('retosEF_sesion');
   document.getElementById('viewAlumno').classList.add('hidden');
   document.getElementById('viewProfesor').classList.add('hidden');
   document.getElementById('viewProfLogin').classList.add('hidden');
@@ -829,6 +835,13 @@ function renderAlumno(){
   renderTabs();
   const cont = document.getElementById('listaRetos');
   cont.innerHTML = '';
+  if(catActiva === 'Nutrición'){
+    const aviso = document.createElement('p');
+    aviso.className = 'small';
+    aviso.style.cssText = 'color:var(--coral);font-weight:600;margin-bottom:12px;';
+    aviso.textContent = '⚠ Los retos de Nutrición cuentan como máximo 2 puntos para la nota, aunque hagas más. Para sacar buena nota necesitas también retos de Condición Física y/o Deporte.';
+    cont.appendChild(aviso);
+  }
   retosTrimestre.filter(r=>r.cat===catActiva).forEach(reto=>{
     const yaElegido = !!misRetosData[reto.id];
     const div = document.createElement('div');
@@ -847,15 +860,27 @@ function renderAlumno(){
   });
 }
 
+function mostrarToast(msg, duracion){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), duracion || 3500);
+}
+
 function elegirReto(id){
   misRetosData[id] = {estado:'elegido', fecha: new Date().toISOString()};
-  guardarLocal(); syncFirebase(); renderAlumno();
+  guardarLocal();
+  mostrarToast('Guardando...', 8000);
+  syncFirebase().finally(()=>location.reload());
 }
 
 function quitarReto(id){
   if(!confirm('¿Quitar este reto de tu lista?')) return;
   delete misRetosData[id];
-  guardarLocal(); syncFirebase(); renderAlumno();
+  guardarLocal();
+  mostrarToast('Guardando...', 8000);
+  syncFirebase().finally(()=>location.reload());
 }
 
 /* ======================= MODAL EVIDENCIA ======================= */
@@ -915,9 +940,10 @@ function guardarEvidencia(){
     fecha: new Date().toISOString(),
     validadoProfe: false
   };
-  guardarLocal(); syncFirebase();
+  guardarLocal();
   cerrarModal();
-  renderAlumno();
+  mostrarToast('Guardando...', 8000);
+  syncFirebase().finally(()=>location.reload());
 }
 
 /* ======================= VISTA PROFESOR ======================= */
@@ -1052,175 +1078,4 @@ function renderResumen(){
       porReto[retoId] = (porReto[retoId]||0) + 1;
       if(d.validadoProfe){
         totalValidados++;
-        if(reto) porCategoria[reto.cat] = (porCategoria[reto.cat]||0) + 1;
-      } else if(d.estado==='completado'){
-        totalCompletados++;
-      } else {
-        totalElegidos++;
-      }
-    });
-    if(algo) porClase[claseKey].elegidos++;
-  });
-
-  document.getElementById('statAlumnos').textContent = ids.length;
-  document.getElementById('statElegidos').textContent = totalElegidos;
-  document.getElementById('statCompletados').textContent = totalCompletados;
-  document.getElementById('statValidados').textContent = totalValidados;
-
-  const catItems = CATEGORIAS.map(c=>({label:c, value:porCategoria[c]||0}));
-  pintarBarras('chartCategorias', catItems, Math.max(1,...catItems.map(i=>i.value)));
-
-  const claseItems = Object.keys(porClase).sort().map(k=>({label:k, value:porClase[k].elegidos}));
-  pintarBarras('chartClases', claseItems, Math.max(1,...claseItems.map(i=>i.value)));
-
-  const topRetos = Object.keys(porReto)
-    .map(id=>({label:'#'+id+' '+((RETOS.find(r=>r.id==id)||{}).texto||'').slice(0,30)+'…', value:porReto[id]}))
-    .sort((x,y)=>y.value-x.value)
-    .slice(0,8);
-  pintarBarras('chartTopRetos', topRetos, Math.max(1,...topRetos.map(i=>i.value)));
-}
-
-function redondearNotaDiscreta(n){
-  // pasos de 2 en 2, entre 0 y 10
-  return Math.min(10, Math.max(0, Math.round(n/2)*2));
-}
-
-function renderEvaluacion(){
-  const umbral10 = parseFloat(document.getElementById('umbral10').value) || 10;
-  const umbral6 = parseFloat(document.getElementById('umbral6').value) || 5;
-  const tbody = document.getElementById('tbodyEvaluacion');
-  tbody.innerHTML = '';
-  const tLabel = document.getElementById('evalTrimestreTxt');
-  const t = trimestreFiltro();
-
-  if(t===null){
-    if(tLabel) tLabel.textContent = 'Elige un trimestre concreto arriba para calcular la nota (cada trimestre tiene retos y puntos distintos).';
-    tbody.innerHTML = '<tr><td colspan="7" class="small" style="text-align:center;padding:20px;">Selecciona 1er, 2º o 3er trimestre para ver las notas.</td></tr>';
-    return;
-  }
-  if(tLabel) tLabel.textContent = 'Nota del trimestre ' + t;
-
-  alumnosFiltrados().forEach(alId=>{
-    const a = todosAlumnosData[alId];
-    const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
-    const retos = retosIds.map(id=>a.retos[id]);
-    const validados = retos.filter(d=>d.validadoProfe);
-    const nValidados = validados.length;
-    const puntosAcum = retosIds.reduce((sum,retoId)=>{
-      const d = a.retos[retoId];
-      if(!d.validadoProfe) return sum;
-      const reto = RETOS.find(r=>r.id==retoId);
-      return sum + (reto ? reto.puntos : 1);
-    }, 0);
-
-    // Criterio 1: puntos de dificultad acumulados, interpolado de forma discreta
-    let c1;
-    if(puntosAcum >= umbral10) c1 = 10;
-    else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
-    else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
-    c1 = redondearNotaDiscreta(c1);
-
-    // Criterio 2: % de retos validados con evidencia completa (foto o comentario + adulto)
-    let c2 = 0;
-    if(nValidados > 0){
-      const conEvidencia = validados.filter(d=>(d.comentario || d.foto) && d.adulto).length;
-      c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
-    }
-
-    const notaFinal = redondearNotaDiscreta((c1+c2)/2);
-    const claseNota = notaFinal >= 5 ? 'nota-aprobado' : 'nota-suspenso';
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${a.info.nombre}</td>
-      <td>${a.info.curso} ${a.info.clase}</td>
-      <td>${nValidados}</td>
-      <td>${puntosAcum}</td>
-      <td>${c1}</td>
-      <td>${c2}</td>
-      <td><span class="nota-badge ${claseNota}">${notaFinal}</span></td>`;
-    tbody.appendChild(tr);
-  });
-}
-
-function exportGradesCSV(){
-  const t = trimestreFiltro();
-  if(t===null){
-    alert('Elige un trimestre concreto (1º, 2º o 3º) para exportar las notas.');
-    return;
-  }
-  const umbral10 = parseFloat(document.getElementById('umbral10').value) || 10;
-  const umbral6 = parseFloat(document.getElementById('umbral6').value) || 5;
-  let rows = [['Alumno','Curso','Clase','RetosValidados','PuntosAcumulados','Criterio1_Puntos','Criterio2_Evidencia','NotaFinal']];
-  alumnosFiltrados().forEach(alId=>{
-    const a = todosAlumnosData[alId];
-    const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
-    const retos = retosIds.map(id=>a.retos[id]);
-    const validados = retos.filter(d=>d.validadoProfe);
-    const nValidados = validados.length;
-    const puntosAcum = retosIds.reduce((sum,retoId)=>{
-      const d = a.retos[retoId];
-      if(!d.validadoProfe) return sum;
-      const reto = RETOS.find(r=>r.id==retoId);
-      return sum + (reto ? reto.puntos : 1);
-    }, 0);
-    let c1;
-    if(puntosAcum >= umbral10) c1 = 10;
-    else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
-    else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
-    c1 = redondearNotaDiscreta(c1);
-    let c2 = 0;
-    if(nValidados > 0){
-      const conEvidencia = validados.filter(d=>(d.comentario || d.foto) && d.adulto).length;
-      c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
-    }
-    const notaFinal = redondearNotaDiscreta((c1+c2)/2);
-    rows.push([a.info.nombre, a.info.curso, a.info.clase, nValidados, puntosAcum, c1, c2, notaFinal]);
-  });
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'retos_ef_notas_trimestre' + (t||'todos') + '.csv'; a.click();
-}
-
-function validarReto(alId, retoId){
-  todosAlumnosData[alId].retos[retoId].validadoProfe = true;
-  if(fbEnabled){
-    db.ref('retosEF/alumnos/'+alId+'/retos/'+retoId+'/validadoProfe').set(true);
-  } else {
-    const raw = localStorage.getItem(localKeyAlumno(alId));
-    if(raw){
-      const d = JSON.parse(raw);
-      d.retos[retoId].validadoProfe = true;
-      localStorage.setItem(localKeyAlumno(alId), JSON.stringify(d));
-    }
-  }
-  renderProfesor();
-}
-
-function exportCSV(){
-  let rows = [['Alumno','Curso','Clase','Reto','Categoria','Estado','Comentario','Adulto','Fecha']];
-  alumnosFiltrados().forEach(alId=>{
-    const a = todosAlumnosData[alId];
-    Object.keys(a.retos||{}).forEach(retoId=>{
-      if(!retoEnTrimestreFiltro(retoId)) return;
-      const d = a.retos[retoId];
-      const reto = RETOS.find(r=>r.id==retoId);
-      const est = d.validadoProfe ? 'validado' : (d.estado==='completado' ? 'completado' : 'elegido');
-      rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), d.adulto||'', d.fecha||'']);
-    });
-  });
-  const csv = rows.map(r=>r.join(',')).join('\n');
-  const blob = new Blob([csv], {type:'text/csv'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'retos_ef.csv'; a.click();
-}
-
-document.getElementById('syncBadge').textContent = fbEnabled ? '● Firebase conectado' : '● Modo local';
-cargarListasClase(actualizarListaNombres);
-console.log('Retos EF · build ' + new Date().toISOString().slice(0,16).replace('T',' '));
-</script>
-</body>
-</html>
+        if(reto) porCategoria[reto.cat] = (porCategoria[reto.c
