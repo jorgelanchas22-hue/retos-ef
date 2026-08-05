@@ -110,18 +110,24 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
     <div id="loginError" class="small" style="color:var(--coral);margin-bottom:10px;"></div>
     <label>Curso</label>
     <select id="inCurso" onchange="actualizarListaNombres()">
+      <option value="">-- Elige tu curso --</option>
       <option value="2ESO">2º ESO</option>
       <option value="4ESO">4º ESO</option>
     </select>
-    <label>Clase</label>
-    <select id="inClase" onchange="actualizarListaNombres()">
-      <option value="A">A</option>
-      <option value="B">B</option>
-      <option value="C">C</option>
-    </select>
-    <label>Nombre y apellidos</label>
-    <select id="inNombreSelect" class="hidden" onchange="cambioSelectNombre()"></select>
-    <input id="inNombre" placeholder="Ej: Ana Pérez">
+    <div id="bloqueClase" class="hidden">
+      <label>Clase</label>
+      <select id="inClase" onchange="actualizarListaNombres()">
+        <option value="">-- Elige tu clase --</option>
+        <option value="A">A</option>
+        <option value="B">B</option>
+        <option value="C">C</option>
+      </select>
+    </div>
+    <div id="bloqueNombre" class="hidden">
+      <label>Nombre y apellidos</label>
+      <select id="inNombreSelect" class="hidden" onchange="cambioSelectNombre()"></select>
+      <input id="inNombre" placeholder="Ej: Ana Pérez">
+    </div>
     <button class="btn btn-lime" style="width:100%;margin-top:8px;" onclick="loginAlumno()">Entrar</button>
     <div style="text-align:center;margin-top:18px;">
       <button class="link-btn" onclick="showProfLogin()">Soy profesor/a</button>
@@ -658,6 +664,8 @@ function showAlumnoLogin(){
 function loginAlumno(){
   const curso = document.getElementById('inCurso').value;
   const clase = document.getElementById('inClase').value;
+  if(!curso){ document.getElementById('loginError').textContent = 'Elige tu curso.'; return; }
+  if(!clase){ document.getElementById('loginError').textContent = 'Elige tu clase.'; return; }
   const sel = document.getElementById('inNombreSelect');
   let nombre = '';
   if(!sel.classList.contains('hidden') && sel.value && sel.value !== '__otro__'){
@@ -700,6 +708,22 @@ function loginAlumno(){
 function actualizarListaNombres(){
   const curso = document.getElementById('inCurso').value;
   const clase = document.getElementById('inClase').value;
+  const bloqueClase = document.getElementById('bloqueClase');
+  const bloqueNombre = document.getElementById('bloqueNombre');
+
+  if(!curso){
+    bloqueClase.classList.add('hidden');
+    bloqueNombre.classList.add('hidden');
+    return;
+  }
+  bloqueClase.classList.remove('hidden');
+
+  if(!clase){
+    bloqueNombre.classList.add('hidden');
+    return;
+  }
+  bloqueNombre.classList.remove('hidden');
+
   const key = curso + '_' + clase;
   const nombres = (listasClase && listasClase[key]) || [];
   const sel = document.getElementById('inNombreSelect');
@@ -1057,25 +1081,4 @@ function pintarBarras(contenedorId, items, maxVal){
   });
 }
 
-function renderResumen(){
-  const ids = alumnosFiltrados();
-  let totalElegidos=0, totalCompletados=0, totalValidados=0;
-  const porCategoria = {}; CATEGORIAS.forEach(c=>porCategoria[c]=0);
-  const porClase = {};
-  const porReto = {};
-
-  ids.forEach(alId=>{
-    const a = todosAlumnosData[alId];
-    const claseKey = a.info.curso + ' ' + a.info.clase;
-    porClase[claseKey] = porClase[claseKey] || {elegidos:0, total:0};
-    porClase[claseKey].total++;
-    let algo=false;
-    Object.keys(a.retos||{}).forEach(retoId=>{
-      if(!retoEnTrimestreFiltro(retoId)) return;
-      const d = a.retos[retoId];
-      const reto = RETOS.find(r=>r.id==retoId);
-      algo = true;
-      porReto[retoId] = (porReto[retoId]||0) + 1;
-      if(d.validadoProfe){
-        totalValidados++;
-        if(reto) porCategoria[reto.cat] = (porCategoria[reto.c
+function rend
