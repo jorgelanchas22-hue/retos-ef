@@ -637,10 +637,24 @@ function guardarListaClase(){
     .split('\n').map(n=>n.trim()).filter(Boolean);
   listasClase[key] = nombres;
   localStorage.setItem('retosEF_listas', JSON.stringify(listasClase));
+  const txt = document.getElementById('listaGuardadaTxt');
   if(fbEnabled){
-    db.ref('retosEF/config/listas/' + key).set(nombres);
+    txt.style.color = '';
+    txt.textContent = 'Guardando en la nube...';
+    db.ref('retosEF/config/listas/' + key).set(nombres)
+      .then(()=>{
+        txt.style.color = '';
+        txt.textContent = '✔ Guardado en la nube: ' + nombres.length + ' alumnos/as en ' + curso + ' ' + clase;
+      })
+      .catch(err=>{
+        console.error('Error guardando lista en Firebase:', err);
+        txt.style.color = 'var(--coral)';
+        txt.textContent = '⚠ No se pudo guardar en la nube (revisa conexión/reglas). Guardado solo en este dispositivo.';
+      });
+  } else {
+    txt.style.color = '';
+    txt.textContent = 'Guardado (solo en este dispositivo, modo local): ' + nombres.length + ' alumnos/as en ' + curso + ' ' + clase;
   }
-  document.getElementById('listaGuardadaTxt').textContent = 'Guardado: ' + nombres.length + ' alumnos/as en ' + curso + ' ' + clase;
 }
 
 function cargarTextareaLista(){
@@ -763,13 +777,25 @@ function loginProfesor(){
   document.getElementById('viewProfLogin').classList.add('hidden');
   document.getElementById('viewProfesor').classList.remove('hidden');
   document.getElementById('btnLogout').style.display='inline-block';
-  cargarTrimestreActivo(()=>{
-    document.getElementById('inTrimestreActivo').value = trimestreActivo;
-    document.getElementById('fTrimestre').value = trimestreActivo;
-    document.getElementById('trimestreActivoTxt').textContent = 'Activo ahora: trimestre ' + trimestreActivo;
-    cargarListasClase();
-    cargarTodosParaProfesor(renderProfesor);
-  });
+
+  function continuarProfesor(){
+    cargarTrimestreActivo(()=>{
+      document.getElementById('inTrimestreActivo').value = trimestreActivo;
+      document.getElementById('fTrimestre').value = trimestreActivo;
+      document.getElementById('trimestreActivoTxt').textContent = 'Activo ahora: trimestre ' + trimestreActivo;
+      cargarListasClase();
+      cargarTodosParaProfesor(renderProfesor);
+    });
+  }
+
+  if(fbEnabled){
+    auth.signInAnonymously().then(continuarProfesor).catch(err=>{
+      console.error('Error de autenticación anónima en Firebase (profesor):', err);
+      continuarProfesor();
+    });
+  } else {
+    continuarProfesor();
+  }
 }
 
 function guardarTrimestreActivoUI(){
@@ -1055,30 +1081,4 @@ function renderRegistro(){
         tdAccion.appendChild(btn);
       }
       if(d.foto){
-        const btnFoto = document.createElement('button');
-        btnFoto.className='link-btn'; btnFoto.style.marginLeft='8px';
-        btnFoto.textContent='ver foto';
-        btnFoto.onclick=()=>window.open(d.foto,'_blank');
-        tdAccion.appendChild(btnFoto);
-      }
-      tbody.appendChild(tr);
-    });
-  });
-}
-
-function pintarBarras(contenedorId, items, maxVal){
-  const cont = document.getElementById(contenedorId);
-  cont.innerHTML = '';
-  if(!items.length){ cont.innerHTML = '<p class="small">Aún no hay datos.</p>'; return; }
-  items.forEach(it=>{
-    const pct = maxVal>0 ? Math.round((it.value/maxVal)*100) : 0;
-    const row = document.createElement('div');
-    row.className = 'bar-row';
-    row.innerHTML = `<div class="bar-label">${it.label}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
-      <div class="bar-value">${it.value}</div>`;
-    cont.appendChild(row);
-  });
-}
-
-function rend
+        const btnFoto = document.createElement('button')
