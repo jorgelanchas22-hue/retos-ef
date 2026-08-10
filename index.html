@@ -1081,4 +1081,255 @@ function renderRegistro(){
         tdAccion.appendChild(btn);
       }
       if(d.foto){
-        const btnFoto = document.createElement('button')
+        const btnFoto = document.createElement('button');
+        btnFoto.className='link-btn'; btnFoto.style.marginLeft='8px';
+        btnFoto.textContent='ver foto';
+        btnFoto.onclick=()=>window.open(d.foto,'_blank');
+        tdAccion.appendChild(btnFoto);
+      }
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function pintarBarras(contenedorId, items, maxVal){
+  const cont = document.getElementById(contenedorId);
+  cont.innerHTML = '';
+  if(!items.length){ cont.innerHTML = '<p class="small">Aún no hay datos.</p>'; return; }
+  items.forEach(it=>{
+    const pct = maxVal>0 ? Math.round((it.value/maxVal)*100) : 0;
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    row.innerHTML = `<div class="bar-label">${it.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+      <div class="bar-value">${it.value}</div>`;
+    cont.appendChild(row);
+  });
+}
+
+function renderResumen(){
+  const ids = alumnosFiltrados();
+  let totalElegidos=0, totalCompletados=0, totalValidados=0;
+  const porCategoria = {}; CATEGORIAS.forEach(c=>porCategoria[c]=0);
+  const porClase = {};
+  const porReto = {};
+
+  ids.forEach(alId=>{
+    const a = todosAlumnosData[alId];
+    const claseKey = a.info.curso + ' ' + a.info.clase;
+    porClase[claseKey] = porClase[claseKey] || {elegidos:0, total:0};
+    porClase[claseKey].total++;
+    let algo=false;
+    Object.keys(a.retos||{}).forEach(retoId=>{
+      if(!retoEnTrimestreFiltro(retoId)) return;
+      const d = a.retos[retoId];
+      const reto = RETOS.find(r=>r.id==retoId);
+      algo = true;
+      porReto[retoId] = (porReto[retoId]||0) + 1;
+      if(d.validadoProfe){
+        totalValidados++;
+        if(reto) porCategoria[reto.cat] = (porCategoria[reto.cat]||0) + 1;
+      } else if(d.estado==='completado'){
+        totalCompletados++;
+      } else {
+        totalElegidos++;
+      }
+    });
+    if(algo) porClase[claseKey].elegidos++;
+  });
+
+  document.getElementById('statAlumnos').textContent = ids.length;
+  document.getElementById('statElegidos').textContent = totalElegidos;
+  document.getElementById('statCompletados').textContent = totalCompletados;
+  document.getElementById('statValidados').textContent = totalValidados;
+
+  const catItems = CATEGORIAS.map(c=>({label:c, value:porCategoria[c]||0}));
+  pintarBarras('chartCategorias', catItems, Math.max(1,...catItems.map(i=>i.value)));
+
+  const claseItems = Object.keys(porClase).sort().map(k=>({label:k, value:porClase[k].elegidos}));
+  pintarBarras('chartClases', claseItems, Math.max(1,...claseItems.map(i=>i.value)));
+
+  const topRetos = Object.keys(porReto)
+    .map(id=>({label:'#'+id+' '+((RETOS.find(r=>r.id==id)||{}).texto||'').slice(0,30)+'…', value:porReto[id]}))
+    .sort((x,y)=>y.value-x.value)
+    .slice(0,8);
+  pintarBarras('chartTopRetos', topRetos, Math.max(1,...topRetos.map(i=>i.value)));
+}
+
+function redondearNotaDiscreta(n){
+  // pasos de 2 en 2, entre 0 y 10
+  return Math.min(10, Math.max(0, Math.round(n/2)*2));
+}
+
+function renderEvaluacion(){
+  const umbral10 = parseFloat(document.getElementById('umbral10').value) || 10;
+  const umbral6 = parseFloat(document.getElementById('umbral6').value) || 5;
+  const tbody = document.getElementById('tbodyEvaluacion');
+  tbody.innerHTML = '';
+  const tLabel = document.getElementById('evalTrimestreTxt');
+  const t = trimestreFiltro();
+
+  if(t===null){
+    if(tLabel) tLabel.textContent = 'Elige un trimestre concreto arriba para calcular la nota (cada trimestre tiene retos y puntos distintos).';
+    tbody.innerHTML = '<tr><td colspan="7" class="small" style="text-align:center;padding:20px;">Selecciona 1er, 2º o 3er trimestre para ver las notas.</td></tr>';
+    return;
+  }
+  if(tLabel) tLabel.textContent = 'Nota del trimestre ' + t;
+
+  alumnosFiltrados().forEach(alId=>{
+    const a = todosAlumnosData[alId];
+    const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
+    const retos = retosIds.map(id=>a.retos[id]);
+    const validados = retos.filter(d=>d.validadoProfe);
+    const nValidados = validados.length;
+    const TOPE_NUTRICION = 2; // Nutrición cuenta como máximo 2 puntos para la nota; el resto debe salir de Condición Física y Deporte
+    let puntosNutricion = 0, puntosResto = 0;
+    retosIds.forEach(retoId=>{
+      const d = a.retos[retoId];
+      if(!d.validadoProfe) return;
+      const reto = RETOS.find(r=>r.id==retoId);
+      const pts = reto ? reto.puntos : 1;
+      if(reto && reto.cat === 'Nutrición') puntosNutricion += pts;
+      else puntosResto += pts;
+    });
+    const puntosAcum = puntosResto + Math.min(puntosNutricion, TOPE_NUTRICION);
+
+    // Criterio 1: puntos de dificultad acumulados, interpolado de forma discreta
+    let c1;
+    if(puntosAcum >= umbral10) c1 = 10;
+    else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
+    else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
+    c1 = redondearNotaDiscreta(c1);
+
+    // Criterio 2: % de retos validados con evidencia completa (foto o comentario + adulto)
+    let c2 = 0;
+    if(nValidados > 0){
+      const conEvidencia = validados.filter(d=>(d.comentario || d.foto) && d.adulto).length;
+      c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
+    }
+
+    const notaFinal = redondearNotaDiscreta((c1+c2)/2);
+    const claseNota = notaFinal >= 5 ? 'nota-aprobado' : 'nota-suspenso';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${a.info.nombre}</td>
+      <td>${a.info.curso} ${a.info.clase}</td>
+      <td>${nValidados}</td>
+      <td>${puntosAcum}</td>
+      <td>${c1}</td>
+      <td>${c2}</td>
+      <td><span class="nota-badge ${claseNota}">${notaFinal}</span></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function exportGradesCSV(){
+  const t = trimestreFiltro();
+  if(t===null){
+    alert('Elige un trimestre concreto (1º, 2º o 3º) para exportar las notas.');
+    return;
+  }
+  const umbral10 = parseFloat(document.getElementById('umbral10').value) || 10;
+  const umbral6 = parseFloat(document.getElementById('umbral6').value) || 5;
+  let rows = [['Alumno','Curso','Clase','RetosValidados','PuntosAcumulados','Criterio1_Puntos','Criterio2_Evidencia','NotaFinal']];
+  alumnosFiltrados().forEach(alId=>{
+    const a = todosAlumnosData[alId];
+    const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
+    const retos = retosIds.map(id=>a.retos[id]);
+    const validados = retos.filter(d=>d.validadoProfe);
+    const nValidados = validados.length;
+    const TOPE_NUTRICION = 2; // Nutrición cuenta como máximo 2 puntos para la nota; el resto debe salir de Condición Física y Deporte
+    let puntosNutricion = 0, puntosResto = 0;
+    retosIds.forEach(retoId=>{
+      const d = a.retos[retoId];
+      if(!d.validadoProfe) return;
+      const reto = RETOS.find(r=>r.id==retoId);
+      const pts = reto ? reto.puntos : 1;
+      if(reto && reto.cat === 'Nutrición') puntosNutricion += pts;
+      else puntosResto += pts;
+    });
+    const puntosAcum = puntosResto + Math.min(puntosNutricion, TOPE_NUTRICION);
+    let c1;
+    if(puntosAcum >= umbral10) c1 = 10;
+    else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
+    else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
+    c1 = redondearNotaDiscreta(c1);
+    let c2 = 0;
+    if(nValidados > 0){
+      const conEvidencia = validados.filter(d=>(d.comentario || d.foto) && d.adulto).length;
+      c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
+    }
+    const notaFinal = redondearNotaDiscreta((c1+c2)/2);
+    rows.push([a.info.nombre, a.info.curso, a.info.clase, nValidados, puntosAcum, c1, c2, notaFinal]);
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'retos_ef_notas_trimestre' + (t||'todos') + '.csv'; a.click();
+}
+
+function validarReto(alId, retoId){
+  todosAlumnosData[alId].retos[retoId].validadoProfe = true;
+  if(fbEnabled){
+    db.ref('retosEF/alumnos/'+alId+'/retos/'+retoId+'/validadoProfe').set(true);
+  } else {
+    const raw = localStorage.getItem(localKeyAlumno(alId));
+    if(raw){
+      const d = JSON.parse(raw);
+      d.retos[retoId].validadoProfe = true;
+      localStorage.setItem(localKeyAlumno(alId), JSON.stringify(d));
+    }
+  }
+  renderProfesor();
+}
+
+function exportCSV(){
+  let rows = [['Alumno','Curso','Clase','Reto','Categoria','Estado','Comentario','Adulto','Fecha']];
+  alumnosFiltrados().forEach(alId=>{
+    const a = todosAlumnosData[alId];
+    Object.keys(a.retos||{}).forEach(retoId=>{
+      if(!retoEnTrimestreFiltro(retoId)) return;
+      const d = a.retos[retoId];
+      const reto = RETOS.find(r=>r.id==retoId);
+      const est = d.validadoProfe ? 'validado' : (d.estado==='completado' ? 'completado' : 'elegido');
+      rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), d.adulto||'', d.fecha||'']);
+    });
+  });
+  const csv = rows.map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'retos_ef.csv'; a.click();
+}
+
+document.getElementById('syncBadge').textContent = fbEnabled ? '● Firebase conectado' : '● Modo local';
+console.log('Retos EF · build ' + new Date().toISOString().slice(0,16).replace('T',' '));
+
+// Auto-reentrar si hay una sesión de alumno guardada (tras un refresco automático)
+function autoLoginSesion(){
+  const raw = localStorage.getItem('retosEF_sesion');
+  if(!raw) return;
+  try{
+    const sesion = JSON.parse(raw);
+    document.getElementById('inCurso').value = sesion.curso;
+    document.getElementById('inClase').value = sesion.clase;
+    actualizarListaNombres();
+    const sel = document.getElementById('inNombreSelect');
+    if(!sel.classList.contains('hidden')){
+      sel.value = sesion.nombre;
+      if(sel.value !== sesion.nombre){ sel.value = '__otro__'; cambioSelectNombre(); document.getElementById('inNombre').value = sesion.nombre; }
+    } else {
+      document.getElementById('inNombre').value = sesion.nombre;
+    }
+    loginAlumno();
+  }catch(e){ console.warn('No se pudo reentrar automáticamente', e); }
+}
+cargarListasClase(function(){
+  actualizarListaNombres();
+  autoLoginSesion();
+});
+</script>
+</body>
+</html>
