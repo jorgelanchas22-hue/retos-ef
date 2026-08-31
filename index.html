@@ -139,9 +139,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
     <div class="display">Panel docente</div>
     <p class="sub">Introduce la contraseña de acceso.</p>
     <div id="profError" class="small" style="color:var(--coral);margin-bottom:10px;"></div>
-    <label>Contraseña</label>
-    <input id="inProfPass" type="password">
-    <button class="btn btn-lime" style="width:100%;margin-top:8px;" onclick="loginProfesor()">Entrar</button>
+    
+    <button class="btn btn-lime" style="width:100%;margin-top:8px;" onclick="loginProfesor()">🔐 Entrar con Google</button>
     <div style="text-align:center;margin-top:18px;">
       <button class="link-btn" onclick="showAlumnoLogin()">Soy alumno/a</button>
     </div>
@@ -505,7 +504,7 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "266685736001",
   appId: "1:266685736001:web:39cd06e34f2fd3200752c0"
 };
-const TEACHER_PASSWORD = "triana26";
+const AUTHORIZED_EMAIL = "jorge.lanchas@triana.salesianos.edu";
 
 let fbEnabled = false, db = null, auth = null;
 try{
@@ -768,17 +767,14 @@ function cambioSelectNombre(){
 }
 
 function loginProfesor(){
-  const pass = document.getElementById('inProfPass').value;
-  if(pass !== TEACHER_PASSWORD){
-    document.getElementById('profError').textContent = 'Contraseña incorrecta.';
-    return;
-  }
-  esProfesor = true;
-  document.getElementById('viewProfLogin').classList.add('hidden');
-  document.getElementById('viewProfesor').classList.remove('hidden');
-  document.getElementById('btnLogout').style.display='inline-block';
+  const errorEl = document.getElementById('profError');
+  errorEl.textContent = '';
 
   function continuarProfesor(){
+    esProfesor = true;
+    document.getElementById('viewProfLogin').classList.add('hidden');
+    document.getElementById('viewProfesor').classList.remove('hidden');
+    document.getElementById('btnLogout').style.display='inline-block';
     cargarTrimestreActivo(()=>{
       document.getElementById('inTrimestreActivo').value = trimestreActivo;
       document.getElementById('fTrimestre').value = trimestreActivo;
@@ -789,9 +785,20 @@ function loginProfesor(){
   }
 
   if(fbEnabled){
-    auth.signInAnonymously().then(continuarProfesor).catch(err=>{
-      console.error('Error de autenticación anónima en Firebase (profesor):', err);
+    errorEl.textContent = 'Abriendo Google...';
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    auth.signInWithPopup(provider).then(res=>{
+      const email = ((res.user && res.user.email) || '').toLowerCase();
+      if(email !== AUTHORIZED_EMAIL.toLowerCase()){
+        errorEl.textContent = 'Esta cuenta no está autorizada.';
+        auth.signOut();
+        return;
+      }
+      errorEl.textContent = '';
       continuarProfesor();
+    }).catch(err=>{
+      errorEl.textContent = (err && err.code === 'auth/popup-closed-by-user') ? 'Se cerró la ventana de Google.' : 'No se pudo iniciar sesión con Google.';
     });
   } else {
     continuarProfesor();
@@ -806,6 +813,7 @@ function guardarTrimestreActivoUI(){
 
 function logout(){
   alumno = null; esProfesor = false; misRetosData = {};
+  if(fbEnabled && auth && auth.currentUser){ auth.signOut(); }
   localStorage.removeItem('retosEF_sesion');
   document.getElementById('viewAlumno').classList.add('hidden');
   document.getElementById('viewProfesor').classList.add('hidden');
