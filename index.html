@@ -85,6 +85,19 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
 .nota-badge{font-family:'Anton',sans-serif;font-size:16px;padding:2px 10px;border-radius:6px;display:inline-block;}
 .nota-suspenso{background:rgba(140,10,30,0.12);color:var(--coral);}
 .nota-aprobado{background:rgba(200,16,46,0.10);color:var(--lime);}
+
+.help-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;}
+.help-box summary{cursor:pointer;font-weight:800;color:var(--lime);}
+.proposal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;}
+.proposal-status{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-top:8px;}
+.status-pending{background:#fff4d6;color:#7a5a00;}
+.status-approved{background:rgba(200,16,46,.10);color:var(--lime);}
+.status-rejected{background:#eee;color:#666;}
+.video-link-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.video-link-row a{font-size:12px;font-weight:700;color:var(--lime);text-decoration:none;border:1px solid var(--line);border-radius:20px;padding:4px 9px;background:#fff;}
+.guide-step{padding:10px 0;border-bottom:1px solid var(--line);}
+.guide-step:last-child{border-bottom:0;}
+
 </style>
 </head>
 <body>
@@ -158,9 +171,28 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
     </div>
 
+
+    <details class="help-box">
+      <summary>¿Cómo funciona Retos EF?</summary>
+      <div class="guide-step"><b>1. Elige o propón.</b> Puedes escoger un reto del banco de tu curso o proponer uno propio.</div>
+      <div class="guide-step"><b>2. Si propones uno propio, lo aprueba el profesor.</b> Hasta que no esté aprobado no puntúa.</div>
+      <div class="guide-step"><b>3. Registra tu progreso.</b> Puedes añadir enlaces de Drive a vídeos cortos de INICIO, PROGRESO y FINAL.</div>
+      <div class="guide-step"><b>4. Los vídeos no se publican en redes.</b> Súbelos a tu Drive, compártelos como lector con <b>jorge.lanchas@triana.salesianos.edu</b> y pega aquí el enlace.</div>
+      <div class="guide-step"><b>5. La app guarda el enlace, no el vídeo.</b> Cuando termines, envía el reto a validar. El profesor revisará la evidencia.</div>
+      <div class="guide-step"><b>6. Cuida la privacidad.</b> Graba solo lo necesario para demostrar el reto y evita que aparezcan otras personas sin necesidad.</div>
+    </details>
+
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Mis retos</h2></div>
     <div id="misRetos" class="grid"></div>
     <p id="misRetosVacio" class="small">Aún no has elegido ningún reto. ¡Elige uno abajo!</p>
+
+
+    <div class="card" style="margin-top:20px;">
+      <h3 style="margin:0 0 6px;font-size:16px;">Propón tu propio reto</h3>
+      <p class="small">¿Tienes un objetivo que encaja mejor contigo? Propónlo. El profesor lo revisará y decidirá si se aprueba y cuántos puntos vale.</p>
+      <button class="btn btn-lime btn-sm" onclick="abrirModalRetoPropio()">+ Proponer mi reto</button>
+      <div id="misRetosPropios" style="margin-top:12px;"></div>
+    </div>
 
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Elegir retos</h2></div>
     <div class="tabs" id="tabsCategoria"></div>
@@ -209,7 +241,9 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         <div class="tab" id="tabRegistro" onclick="cambiarTabProfe('registro')">Registro</div>
         <div class="tab" id="tabEvaluacion" onclick="cambiarTabProfe('evaluacion')">Evaluación</div>
         <div class="tab" id="tabTabla" onclick="cambiarTabProfe('tabla')">Tabla de retos</div>
+        <div class="tab" id="tabPropios" onclick="cambiarTabProfe('propios')">Retos propuestos</div>
         <div class="tab" id="tabAlumnado" onclick="cambiarTabProfe('alumnado')">Alumnado</div>
+        <div class="tab" id="tabGuia" onclick="cambiarTabProfe('guia')">Cómo funciona</div>
       </div>
 
       <!-- RESUMEN -->
@@ -317,6 +351,35 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         </div>
       </div>
 
+
+      <!-- RETOS PROPUESTOS POR EL ALUMNADO -->
+      <div id="subPropios" class="hidden">
+        <div class="card" style="margin-top:16px;">
+          <h3 style="margin-top:0;font-size:15px;">Retos personales propuestos</h3>
+          <p class="small">Revisa cada propuesta. Puedes aprobarla con 1, 1,5 o 2 puntos, rechazarla o validar el reto cuando el alumno lo complete.</p>
+          <div style="overflow-x:auto;">
+            <table>
+              <thead><tr><th>Alumno</th><th>Curso</th><th>Propuesta</th><th>Estado</th><th>Evidencias</th><th>Acción</th></tr></thead>
+              <tbody id="tbodyRetosPropios"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="subGuia" class="hidden">
+        <div class="card" style="margin-top:16px;">
+          <h3 style="margin-top:0;font-size:15px;">Cómo funciona Retos EF</h3>
+          <div class="guide-step"><b>Banco por curso y trimestre.</b> 2.º ESO y 4.º ESO tienen retos diferentes y el alumnado solo ve el trimestre activo.</div>
+          <div class="guide-step"><b>Reto propio.</b> El alumno puede proponer un reto personal. No puntúa hasta tu aprobación.</div>
+          <div class="guide-step"><b>Puntuación.</b> Al aprobar un reto propio asignas 1, 1,5 o 2 puntos.</div>
+          <div class="guide-step"><b>Vídeos de progreso.</b> Cada reto puede llevar enlaces de Drive para Inicio → Progreso → Final. La app almacena únicamente los enlaces.</div>
+          <div class="guide-step"><b>Drive.</b> El alumno sube el vídeo a su Drive y lo comparte como lector contigo. Se ha creado en tu Drive <b>RETOS EF 2026-2027</b>, con 2.º/4.º y grupos A/B/C, para el archivo docente.</div>
+          <div class="guide-step"><b>Privacidad.</b> Las carpetas generales no se comparten con las clases. Los vídeos no se publican en TikTok ni en otras redes desde esta app.</div>
+          <div class="guide-step"><b>Validación.</b> El alumno registra progreso; cuando marca el reto como terminado pasa a “Pendiente de validar”. Tú compruebas la evidencia y lo validas.</div>
+          <div style="margin-top:14px;"><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1688Z7AhRuAI7ZjE56qr9GQ9D2ltGiHdH">Abrir carpeta RETOS EF en Drive</a></div>
+        </div>
+      </div>
+
       <!-- ALUMNADO / LISTAS DE CLASE -->
       <div id="subAlumnado" class="hidden">
         <div class="card" style="margin-top:16px;">
@@ -351,26 +414,55 @@ Juan López Ruiz
   </div>
 </div>
 
+
+<!-- MODAL RETO PROPIO -->
+<div id="modalRetoPropio" class="modal-bg hidden">
+  <div class="modal">
+    <h3 style="margin-top:0;">Propón tu propio reto</h3>
+    <p class="small">Debe ser concreto, seguro, realizable y relacionado con actividad física, deporte, condición física o hábitos activos.</p>
+    <label>Título del reto</label>
+    <input id="rpTitulo" maxlength="80" placeholder="Ej: Mejorar mi carrera de 2 km">
+    <label>¿Qué quieres conseguir?</label>
+    <textarea id="rpObjetivo" rows="2" placeholder="Describe el objetivo de forma concreta."></textarea>
+    <label>¿Por qué este reto es un reto para ti?</label>
+    <textarea id="rpPorQue" rows="2" placeholder="Explica brevemente tu punto de partida o dificultad personal."></textarea>
+    <label>¿Cómo vas a trabajarlo?</label>
+    <textarea id="rpPlan" rows="2" placeholder="Sesiones, práctica, duración aproximada..."></textarea>
+    <label>Categoría</label>
+    <select id="rpCategoria">
+      <option value="Condición Física">Condición Física</option>
+      <option value="Deportes">Deportes</option>
+      <option value="Hábitos saludables">Hábitos saludables</option>
+    </select>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button class="btn btn-ghost" style="flex:1;" onclick="cerrarModalRetoPropio()">Cancelar</button>
+      <button class="btn btn-lime" style="flex:1;" onclick="guardarPropuestaReto()">Enviar propuesta</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL EVIDENCIA -->
 <div id="toast" class="toast"></div>
 <div id="modalEvidencia" class="modal-bg hidden">
   <div class="modal">
-    <h3 style="margin-top:0;">Registrar evidencia</h3>
+    <h3 style="margin-top:0;">Registrar progreso</h3>
     <p class="small" id="modalRetoTexto"></p>
+    <p class="small">Sube tus vídeos a Google Drive, compártelos como <b>lector</b> con <b>jorge.lanchas@triana.salesianos.edu</b> y pega los enlaces. Puedes ir añadiéndolos en distintos días.</p>
+    <label>Vídeo · Inicio / punto de partida</label>
+    <input id="inVideoInicio" type="url" placeholder="https://drive.google.com/...">
+    <label>Vídeo · Progreso</label>
+    <input id="inVideoProgreso" type="url" placeholder="https://drive.google.com/...">
+    <label>Vídeo · Resultado final</label>
+    <input id="inVideoFinal" type="url" placeholder="https://drive.google.com/...">
+    <label>Comentario o reflexión breve</label>
+    <textarea id="inComentario" rows="2" placeholder="Qué has mejorado, qué te ha costado o qué has cambiado..."></textarea>
     <div class="check-row">
       <input type="checkbox" id="chkAuto">
-      <label for="chkAuto">Confirmo que he completado este reto</label>
+      <label for="chkAuto">He terminado el reto y quiero enviarlo al profesor para validar</label>
     </div>
-    <label>Comentario (opcional)</label>
-    <textarea id="inComentario" rows="2" placeholder="Cómo te ha ido..."></textarea>
-    <label>Foto o captura (opcional)</label>
-    <input type="file" id="inFoto" accept="image/*">
-    <img id="previewFoto" class="thumb hidden" style="margin-bottom:12px;">
-    <label>Persona que te acompañó o fue testigo (opcional)</label>
-    <input id="inAdulto" placeholder="Ej: compañero/a, familiar, entrenador/a...">
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-ghost" style="flex:1;" onclick="cerrarModal()">Cancelar</button>
-      <button class="btn btn-lime" style="flex:1;" onclick="guardarEvidencia()">Guardar</button>
+      <button class="btn btn-lime" style="flex:1;" onclick="guardarEvidencia()">Guardar progreso</button>
     </div>
   </div>
 </div>
