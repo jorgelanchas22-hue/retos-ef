@@ -712,6 +712,200 @@ let modalRetoId = null;
 let trimestreActivo = 1; // trimestre que ve el alumnado al elegir retos
 let listasClase = {}; // { "2ESO_A": ["Ana Pérez", ...], ... }
 
+const LISTAS_OFICIALES = {
+  "2ESO_A": [
+    "Bejarano Izaguirre, Lucía",
+    "Bermejo Moreno, Guzmán",
+    "Corado Álvarez, Manuel",
+    "De la Fuente Montero, Cayetana",
+    "Elvira Guerrero, Carlos",
+    "Errazquin Márquez, Lucas",
+    "Fraile Gutiérrez, Alejandro",
+    "García Ancela, Lola",
+    "García Casado, Isabel",
+    "Gil Vidal, Adriana",
+    "González Correa, Ángel",
+    "Guerrero Vigil, Darío",
+    "Gutiérrez González, Aarón",
+    "Hijón Moreno, Angela",
+    "Macías Granados, Rocío",
+    "Marín Batista, Nicolás",
+    "Márquez Guerrero, Javier",
+    "Martín Fernández, Julia",
+    "Parrilla Caballero, Ariana",
+    "Puente Santana, Adrián",
+    "Ramos Reyes, Carlota",
+    "Reina Vilalta, Estrella",
+    "Rico Romero, Isabel",
+    "Rodríguez Berrio, Miguel",
+    "Rueda Vázquez, Andrés",
+    "Rufián Ramos, Jaime",
+    "Ruiz Martínez, Adrián",
+    "Tirado Gómez, David",
+    "Vega Tejada, Francisco David"
+  ],
+  "2ESO_B": [
+    "Barat Caballero, Carlos",
+    "Barroso Gallego, Pablo",
+    "Bolívar Amador, Valeria Arantxa",
+    "Braojos Romero, Álvaro",
+    "Calderón Pulido, Diego",
+    "Camacho Delgado, Valentín",
+    "Capitán Mateos, Lucas",
+    "Castañeda Manayay, Ainhoa Brigitte",
+    "Cerro Quintero, José",
+    "Chávez Ramírez, Valeria Ainara",
+    "De Alba Machado, Candela",
+    "Delgado Jurado, Amelia",
+    "Franco Rodríguez, Juan",
+    "García Fernández, Manuel Jesús",
+    "García de Castro Diáñez, Paula",
+    "Gómez Simón, Juan",
+    "González Gómez, Victoria",
+    "Herrera González de Zárate, José Pablo",
+    "Jiménez Ventura, Ainhoa",
+    "Mariños Poma, Martín Di Stéfano",
+    "Morente Herráez, María",
+    "Palomino Dopazo, Gonzalo",
+    "Plaza Cabeza, Pedro",
+    "Resa Gavira, Manuel",
+    "Romero Escobar, Elsa",
+    "Sánchez Calvillo, Alejandra",
+    "Santos Argullo, Lucía",
+    "Schroeder Terán, Lucas",
+    "Troya Díaz, Alejandro"
+  ],
+  "2ESO_C": [
+    "Algaba Ortiz, Angela de la Cruz",
+    "Allende Pérez, Javier",
+    "Barrera Villajos, Ángela",
+    "Borrego Martín, Juan",
+    "Brenes Alanís, Pedro Jesús",
+    "Casado De la Rosa, Daniela",
+    "De los Santos Ruiz, Ana",
+    "Gamboa Osorio, Anagabriella",
+    "Gamito Fernández, Iván",
+    "Gómez Sánchez, Juan",
+    "Hijón Sánchez, José Ignacio",
+    "Iglesias Ruiz, Diego",
+    "Jiménez Garzón, Lucas",
+    "Jurado Gómez, Nicolás",
+    "López Fernández, Francisco",
+    "López González, Abril",
+    "Machuca Sánchez, Álvaro",
+    "Magro Colume, Ainhoa",
+    "Marín Batista, Miguel",
+    "Mateo Arispón, Ainhoa",
+    "Modroño Fernández, Ana",
+    "Molinero García, Sergio",
+    "Morato Gómez, Alejandro",
+    "Murillo Navarro, Lucía",
+    "Nuño Contreras, Noa",
+    "Ramírez Vega, Paula",
+    "Sánchez Pérez Castilla, Ana",
+    "Segura Iglesia, Lucía",
+    "Somoza Aldana, Jesús",
+    "Wandelmer Salado, José"
+  ],
+  "4ESO_A": [
+    "Alcántara Cruz, Candela",
+    "Aranda Galbis, Carlos",
+    "Cernadas Fernández, Sergio",
+    "Cid Quidiello, Alejandro",
+    "Dorantes González, Rodrigo",
+    "Estévez Ramos, Manuel",
+    "Estrella Eliot, Melanie Ximena",
+    "Fernández de Moya Vallana, Clara de Asís",
+    "Hernández Campos, Marina",
+    "Iglesias López, Pablo Reyes",
+    "Luque Peña, Ernesto",
+    "Martín Valle, Javier",
+    "Menéndez Bermeo, Franchesca",
+    "Paredes Chacón, Juan Luis",
+    "Pulido Leñador, Carlos",
+    "Ricca Tous, Luis",
+    "Ríos Solís, Lucía",
+    "Rodríguez Mora, Álvaro",
+    "Rojas Párraga, Jeyko",
+    "Rubio Frauca, Ana",
+    "Rubio Frauca, Rafael",
+    "Ruiz Prieto, Emilio",
+    "Sánchez Pérez, Francisco Manuel",
+    "Sastre Vela, Manuel",
+    "Segura Molina, Manuel"
+  ],
+  "4ESO_B": [
+    "Álvarez Paisano, José Antonio",
+    "Barroso Sánchez, Triana",
+    "Campos García, Olivia",
+    "Castro Palacios, Daniel",
+    "De Alba Machado, Sara",
+    "Delgado De la Vega, Carmen",
+    "Delgado De la Vega, Juan Manuel",
+    "Díaz Iglesias, Carlota",
+    "Espino Aragón, Samuel",
+    "Gallardo Sempere, Inés",
+    "García Guerra, Sandra",
+    "García Polonsky, Julia",
+    "Gaviño Ramírez, Pablo",
+    "Gutiérrez Ortega, Telma Carolina",
+    "Jiménez Vázquez, Manuel",
+    "Lamet Correa, Candela",
+    "León García, Mercedes",
+    "Limón Gómez, Laura",
+    "López Guzmán, Paola Alejandra",
+    "Luza Hidalgo, Martina",
+    "Machuca Ramos, Ángela",
+    "Martín Gómez, Juan",
+    "Molina Pedrós, Marta",
+    "Núñez Gil, Javier",
+    "Ojeda Romero, Lola",
+    "Oliva González, Julio",
+    "Peregrín Colmena, Paula",
+    "Piruat Muñoz, Cristina",
+    "Román Cruz, Angela",
+    "Ruiz Vargas, Mario",
+    "Saavedra Plaza, Lucía",
+    "Torilo Cordón, Víctor",
+    "Valencia Martínez, Marta"
+  ],
+  "4ESO_C": [
+    "Arenas Bellido, Gonzalo",
+    "Del Val Cordero, Esperanza",
+    "Fernández Ocaña, Fernando",
+    "Gallego Caballero, Amelia",
+    "Guerra García, Manuel",
+    "Herrera León, Ana",
+    "León Carmona, Agustín",
+    "López Giménez de Aragón, Francisco",
+    "López Morato, Ana",
+    "Márquez Barbacid, Sara",
+    "Martínez Fernández, Noelia",
+    "Matas Puntas, Javier",
+    "Medina Villén, Inmaculada",
+    "Mengual Saborido, Antonio José",
+    "Moreno Santiago, Luis",
+    "Muñoz Martín, Pedro",
+    "Palacios Fernández-Sambruno, Esteban",
+    "Palomino Dopazo, Carlos",
+    "Peralvo De la Rosa, Nerea",
+    "Pérez Ortiz, Olivia",
+    "Piña González, Francisco Javier",
+    "Ramos Guerra, Pablo",
+    "Rodríguez López, Álvaro",
+    "Rodríguez Villaseñor, Marta",
+    "Romero Gallú, Lucía",
+    "Sevilla Amores, Carmen",
+    "Soriano Pedreira, Álvaro",
+    "Torres Estrémé, Chloé",
+    "Vargas Barrientos, Manuel",
+    "Vázquez Méndez, Ángel Luis",
+    "Vilalta Gómez, Guillermo",
+    "Wandelmer Salado, María Luisa"
+  ]
+};
+
+
 function uid(){
   return 'a_' + Math.random().toString(36).slice(2,10);
 }
@@ -806,17 +1000,19 @@ function guardarTrimestreActivo(nuevo){
 
 /* ======================= CONFIG: LISTAS DE CLASE ======================= */
 function cargarListasClase(cb){
+  const aplicarOficiales = (base)=>{
+    listasClase = {...(base || {}), ...LISTAS_OFICIALES};
+    localStorage.setItem('retosEF_listas', JSON.stringify(listasClase));
+    cb && cb();
+  };
   if(fbEnabled){
     db.ref('retosEF/config/listas').once('value').then(snap=>{
-      listasClase = snap.val() || JSON.parse(localStorage.getItem('retosEF_listas')||'{}');
-      cb && cb();
+      aplicarOficiales(snap.val() || JSON.parse(localStorage.getItem('retosEF_listas')||'{}'));
     }).catch(()=>{
-      listasClase = JSON.parse(localStorage.getItem('retosEF_listas')||'{}');
-      cb && cb();
+      aplicarOficiales(JSON.parse(localStorage.getItem('retosEF_listas')||'{}'));
     });
   } else {
-    listasClase = JSON.parse(localStorage.getItem('retosEF_listas')||'{}');
-    cb && cb();
+    aplicarOficiales(JSON.parse(localStorage.getItem('retosEF_listas')||'{}'));
   }
 }
 
