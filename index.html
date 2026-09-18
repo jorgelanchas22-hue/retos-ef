@@ -105,8 +105,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
 
   <!-- LOGIN -->
   <div id="viewLogin" class="card login-card">
-    <div class="display">¿Preparado?</div>
-    <p class="sub">Elige tus retos y regístralos aquí.</p>
+    <div class="display">TU RETO, TU PROGRESO</div>
+    <p class="sub">Elige retos de tu curso, complétalos y registra evidencias de tu progreso.</p>
     <div id="loginError" class="small" style="color:var(--coral);margin-bottom:10px;"></div>
     <label>Curso</label>
     <select id="inCurso" onchange="actualizarListaNombres()">
@@ -286,8 +286,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
               <input type="number" id="umbral6" value="5" min="1" step="0.5" onchange="renderProfesor()">
             </div>
           </div>
-          <p class="small">Criterio 2 · Calidad/constancia: % de los retos validados con evidencia completa (foto o comentario + adulto validador).</p>
-          <p class="small" style="color:var(--coral);font-weight:600;">Nota: los retos de Nutrición cuentan como máximo 2 puntos en el Criterio 1, aunque el alumno acumule más. El resto de los puntos debe salir de retos de Condición Física o Deporte.</p>
+          <p class="small">Criterio 2 · Calidad/constancia: % de los retos validados con evidencia suficiente (foto/captura o comentario descriptivo).</p>
+          
         </div>
         <div class="filters">
           <button class="btn btn-ghost btn-sm" onclick="exportGradesCSV()">Exportar notas CSV</button>
@@ -310,7 +310,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         <div style="overflow-x:auto;">
           <table id="tablaRetosCompleta">
             <thead>
-              <tr><th>Nº</th><th>Categoría</th><th>Reto</th><th>Puntos</th></tr>
+              <tr><th>Nº</th><th>Curso</th><th>Categoría</th><th>Reto</th><th>Puntos</th></tr>
             </thead>
             <tbody id="tbodyTablaRetos"></tbody>
           </table>
@@ -366,8 +366,8 @@ Juan López Ruiz
     <label>Foto o captura (opcional)</label>
     <input type="file" id="inFoto" accept="image/*">
     <img id="previewFoto" class="thumb hidden" style="margin-bottom:12px;">
-    <label>Nombre del adulto que valida en casa (opcional)</label>
-    <input id="inAdulto" placeholder="Ej: mamá, papá, tutor/a...">
+    <label>Persona que te acompañó o fue testigo (opcional)</label>
+    <input id="inAdulto" placeholder="Ej: compañero/a, familiar, entrenador/a...">
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-ghost" style="flex:1;" onclick="cerrarModal()">Cancelar</button>
       <button class="btn btn-lime" style="flex:1;" onclick="guardarEvidencia()">Guardar</button>
@@ -376,8 +376,9 @@ Juan López Ruiz
 </div>
 
 <script>
-/* ======================= DATOS: 47 RETOS ======================= */
-const RETOS = [
+/* ======================= BANCO DE RETOS POR CURSO Y TRIMESTRE ======================= */
+
+const RETOS_ANTERIORES = [
 {id:1,cat:"Condición Física",texto:"¡A pedalear! Avisa a tus amigos y sal con la bici 2 veces por mes (septiembre-octubre)",puntos:1,trimestre:1},
 {id:2,cat:"Condición Física",texto:"¡A pedalear! Avisa a tus amigos y sal con la bici 4 veces por mes (septiembre-octubre)",puntos:1.5,trimestre:1},
 {id:3,cat:"Condición Física",texto:"Toca mover el cuerpo. Supera 12.000 pasos más de 5 días, ¿Podrás conseguirlo?",puntos:1,trimestre:1},
@@ -491,8 +492,99 @@ const RETOS = [
 {id:111,cat:"Nutrición",texto:"¡Prepárate para el verano! Sustituye un dulce por una pieza de fruta, 5 días a la semana",puntos:1.5,trimestre:3},
 {id:112,cat:"Nutrición",texto:"¡Cocina fresco! Prepara una ensalada o plato frío saludable con tu familia, al menos 1 vez este trimestre",puntos:1,trimestre:3},
 {id:113,cat:"Nutrición",texto:"¡Desayuno ligero de primavera! Desayuna fruta y lácteos o cereales integrales, toda la semana",puntos:1.5,trimestre:3}
+];;
+
+const RETOS_NUEVOS = [
+  // 2º ESO · 1er trimestre
+  {id:201,cursos:["2ESO"],cat:"Condición Física",texto:"Ritmo sostenible: completa 3 sesiones de 25 minutos de marcha rápida o trote suave en 10 días. Registra duración y esfuerzo percibido (1-10).",puntos:1.5,trimestre:1},
+  {id:202,cursos:["2ESO"],cat:"Condición Física",texto:"Movilidad activa: realiza una salida de 40-60 minutos caminando, en bici o patines por una ruta segura. Guarda una captura del recorrido o describe la ruta.",puntos:1.5,trimestre:1},
+  {id:203,cursos:["2ESO"],cat:"Condición Física",texto:"Circuito funcional: completa 2 vueltas a 6 ejercicios (30 s de trabajo + 20 s de pausa), cuidando la técnica. Indica qué ejercicio te costó más y por qué.",puntos:1.5,trimestre:1},
+  {id:204,cursos:["2ESO"],cat:"Condición Física",texto:"Movilidad y recuperación: realiza 10 minutos de movilidad articular en 4 días distintos durante dos semanas. Anota si notas algún cambio en sensaciones o amplitud.",puntos:1,trimestre:1},
+  {id:205,cursos:["2ESO"],cat:"Condición Física",texto:"Progreso personal: elige una prueba de la evaluación inicial, repítela con el mismo protocolo tras 3 semanas y explica tu evolución. No se compara con otros compañeros.",puntos:2,trimestre:1},
+  {id:206,cursos:["2ESO"],cat:"Deportes",texto:"Baloncesto · control: completa un slalom con 6 referencias botando con ambas manos. Haz 2 intentos y registra tiempo y errores de control.",puntos:1.5,trimestre:1},
+  {id:207,cursos:["2ESO"],cat:"Deportes",texto:"Voleibol · continuidad: consigue una serie controlada de toques de dedos o antebrazos contra una pared. Marca tu mejor serie y vuelve a intentarlo tras practicar.",puntos:1.5,trimestre:1},
+  {id:208,cursos:["2ESO"],cat:"Deportes",texto:"Fútbol sala · precisión: realiza 20 pases a una zona objetivo a unos 5 m, alternando pie derecho e izquierdo. Registra cuántos llegan a la zona.",puntos:1.5,trimestre:1},
+  {id:209,cursos:["2ESO"],cat:"Deportes",texto:"Raqueta o pala · control: logra 15 golpeos consecutivos y después intenta 6 servicios o golpeos dirigidos a una zona marcada.",puntos:1.5,trimestre:1},
+  {id:210,cursos:["2ESO"],cat:"Deportes",texto:"Juego limpio en acción: participa al menos 30 minutos en una actividad deportiva con otras personas y describe 3 conductas concretas de cooperación o fair play que hayas aplicado.",puntos:1,trimestre:1},
+  {id:211,cursos:["2ESO"],cat:"Hábitos saludables",texto:"Pausa activa: sustituye 15 minutos de pantalla por movimiento en 5 días distintos. Explica qué actividad elegiste y cuál te resultó más fácil mantener.",puntos:1,trimestre:1},
+  {id:212,cursos:["2ESO"],cat:"Hábitos saludables",texto:"Hidratación con criterio: compara la etiqueta de agua y de una bebida deportiva o energética, sin necesidad de consumirla. Localiza azúcar/cafeína y explica cuál usarías para hidratarte habitualmente y por qué.",puntos:1.5,trimestre:1},
+
+  // 2º ESO · 2º trimestre
+  {id:213,cursos:["2ESO"],cat:"Condición Física",texto:"Intervalos básicos: realiza 3 sesiones de 20 minutos alternando 1 minuto de carrera suave y 1 minuto caminando. Ajusta el ritmo para terminar con control.",puntos:1.5,trimestre:2},
+  {id:214,cursos:["2ESO"],cat:"Condición Física",texto:"Fuerza con técnica: completa en 3 días distintos un circuito de 6 ejercicios con el propio peso corporal. Prioriza ejecución correcta sobre número de repeticiones.",puntos:1.5,trimestre:2},
+  {id:215,cursos:["2ESO"],cat:"Condición Física",texto:"Resistencia continua: realiza una actividad aeróbica que puedas mantener durante 30 minutos seguidos (andar rápido, bici, trote suave, patines...). Registra esfuerzo percibido.",puntos:1.5,trimestre:2},
+  {id:216,cursos:["2ESO"],cat:"Condición Física",texto:"Comba con control: completa 5 bloques de 1 minuto de salto con descansos suficientes. Intenta mejorar continuidad sin sacrificar técnica.",puntos:1,trimestre:2},
+  {id:217,cursos:["2ESO"],cat:"Condición Física",texto:"Tu calentamiento: diseña y realiza un calentamiento de 8-10 minutos para un deporte que practiques. Debe incluir activación, movilidad y una tarea específica.",puntos:2,trimestre:2},
+  {id:218,cursos:["2ESO"],cat:"Deportes",texto:"Baloncesto · finalización: realiza 10 entradas o lanzamientos cercanos desde cada lado. Registra aciertos y repite después de una breve práctica técnica.",puntos:1.5,trimestre:2},
+  {id:219,cursos:["2ESO"],cat:"Deportes",texto:"Voleibol · saque: realiza 12 saques intentando dirigir el balón a dos zonas diferentes. Anota aciertos y qué cambio técnico te ayudó más.",puntos:1.5,trimestre:2},
+  {id:220,cursos:["2ESO"],cat:"Deportes",texto:"Balonmano · pase: realiza una secuencia de pases contra pared o con un compañero alternando mano dominante y no dominante. Busca precisión antes que velocidad.",puntos:1.5,trimestre:2},
+  {id:221,cursos:["2ESO"],cat:"Deportes",texto:"Bádminton o tenis de mesa · rally: consigue un intercambio de al menos 10 golpes con otra persona. Si lo logras, intenta superar vuestra marca.",puntos:1.5,trimestre:2},
+  {id:222,cursos:["2ESO"],cat:"Deportes",texto:"Crea un minijuego deportivo: inventa una actividad con móvil, espacio reducido y 3 reglas claras. Pruébala durante al menos 20 minutos con otras personas y valora si funciona.",puntos:2,trimestre:2},
+  {id:223,cursos:["2ESO"],cat:"Hábitos saludables",texto:"Recuperación consciente: después de 3 sesiones físicas, dedica 8-10 minutos a vuelta a la calma y movilidad. Describe qué haces y cómo cambian tus sensaciones.",puntos:1,trimestre:2},
+  {id:224,cursos:["2ESO"],cat:"Hábitos saludables",texto:"Leer antes de elegir: compara las etiquetas de dos meriendas habituales fijándote en ingredientes, azúcares, fibra y tamaño de ración. Explica diferencias sin clasificar alimentos como 'prohibidos'.",puntos:1.5,trimestre:2},
+
+  // 2º ESO · 3er trimestre
+  {id:225,cursos:["2ESO"],cat:"Condición Física",texto:"30 minutos en movimiento: completa 2 sesiones continuas a intensidad moderada con la actividad que prefieras. El objetivo es mantener un ritmo estable, no competir.",puntos:1.5,trimestre:3},
+  {id:226,cursos:["2ESO"],cat:"Condición Física",texto:"Ruta activa: realiza una salida de 45-60 minutos caminando, en bici o patines por un recorrido seguro y registra la duración.",puntos:1.5,trimestre:3},
+  {id:227,cursos:["2ESO"],cat:"Condición Física",texto:"Diseña tu circuito: crea 8 estaciones variadas (piernas, empuje, tracción o alternativa, core, coordinación y movilidad) y realiza 2 vueltas.",puntos:2,trimestre:3},
+  {id:228,cursos:["2ESO"],cat:"Condición Física",texto:"Mejora una habilidad: elige una capacidad o habilidad motriz concreta, practica 3 veces en dos semanas y registra tu mejor intento inicial y final.",puntos:2,trimestre:3},
+  {id:229,cursos:["2ESO"],cat:"Condición Física",texto:"Plan activo compartido: organiza una actividad física de al menos 60 minutos con amigos o familia. Explica qué hicisteis y cómo os organizasteis.",puntos:1.5,trimestre:3},
+  {id:230,cursos:["2ESO"],cat:"Deportes",texto:"Precisión deportiva: elige fútbol, baloncesto, balonmano o similar y realiza 20 intentos dirigidos a zonas objetivo. Calcula tu porcentaje de acierto.",puntos:1.5,trimestre:3},
+  {id:231,cursos:["2ESO"],cat:"Deportes",texto:"Voleibol · secuencia: con otra persona intenta enlazar recepción, colocación y envío. Registra vuestra mejor serie y qué parte de la secuencia necesita más práctica.",puntos:1.5,trimestre:3},
+  {id:232,cursos:["2ESO"],cat:"Deportes",texto:"Baloncesto · circuito: combina bote, cambio de dirección, pase a objetivo y lanzamiento. Haz 3 vueltas intentando reducir errores, no solo tiempo.",puntos:2,trimestre:3},
+  {id:233,cursos:["2ESO"],cat:"Deportes",texto:"Descubre un deporte: practica durante al menos 45 minutos una actividad que no sea habitual para ti y explica 3 reglas o fundamentos que hayas aprendido.",puntos:2,trimestre:3},
+  {id:234,cursos:["2ESO"],cat:"Deportes",texto:"Mini-entrenador: enseña a otra persona un gesto técnico que domines. Usa 2-3 indicaciones claras y comprueba si mejora tras 10 minutos de práctica.",puntos:2,trimestre:3},
+  {id:235,cursos:["2ESO"],cat:"Hábitos saludables",texto:"Actividad y calor: prepara un plan sencillo para hacer ejercicio con seguridad en días calurosos: horario, agua, ropa, intensidad y señales para parar.",puntos:1.5,trimestre:3},
+  {id:236,cursos:["2ESO"],cat:"Hábitos saludables",texto:"Reto viral bajo la lupa: analiza un reto de fitness visto en redes. Explica qué capacidad trabaja, qué problema puede tener y cómo lo adaptarías para hacerlo más seguro.",puntos:1.5,trimestre:3},
+
+  // 4º ESO · 1er trimestre
+  {id:301,cursos:["4ESO"],cat:"Condición Física",texto:"Base aeróbica: completa 3 sesiones de 30 minutos a intensidad moderada (RPE 5-6/10). Registra duración, actividad y esfuerzo percibido.",puntos:1.5,trimestre:1},
+  {id:302,cursos:["4ESO"],cat:"Condición Física",texto:"Intervalos con control: realiza 2 sesiones de 8 bloques de 1 minuto activo + 1 minuto de recuperación. Ajusta el ritmo para mantener calidad hasta el final.",puntos:2,trimestre:1},
+  {id:303,cursos:["4ESO"],cat:"Condición Física",texto:"Fuerza general: diseña una sesión de 6 ejercicios con el propio peso, 3 vueltas y pausas razonables. Justifica el orden y registra RPE final.",puntos:2,trimestre:1},
+  {id:304,cursos:["4ESO"],cat:"Condición Física",texto:"Microciclo personal: planifica y realiza una semana con 3 sesiones diferentes (aeróbica, fuerza y movilidad/recuperación). Valora si la distribución fue realista.",puntos:2,trimestre:1},
+  {id:305,cursos:["4ESO"],cat:"Condición Física",texto:"Objetivo SMART: a partir de la evaluación inicial, elige una capacidad física, plantea un objetivo realista para 3 semanas, realiza tu plan y repite la prueba con el mismo protocolo.",puntos:2,trimestre:1},
+  {id:306,cursos:["4ESO"],cat:"Deportes",texto:"Baloncesto · porcentaje de tiro: realiza 20 lanzamientos repartidos en 3 zonas, registra aciertos, practica y repite. Compara porcentajes y explica un ajuste técnico.",puntos:1.5,trimestre:1},
+  {id:307,cursos:["4ESO"],cat:"Deportes",texto:"Voleibol · saque dirigido: realiza 20 saques a zonas objetivo. Calcula porcentaje de acierto y describe qué variable técnica influye más en tu precisión.",puntos:1.5,trimestre:1},
+  {id:308,cursos:["4ESO"],cat:"Deportes",texto:"Fútbol sala · pierna no dominante: completa 20 pases a objetivo alternando ambos pies y 10 controles orientados. Registra aciertos y errores más frecuentes.",puntos:1.5,trimestre:1},
+  {id:309,cursos:["4ESO"],cat:"Deportes",texto:"Raqueta · precisión y continuidad: combina 10 servicios dirigidos a zona y un rally con otra persona. Registra resultados y una decisión táctica que te haya funcionado.",puntos:1.5,trimestre:1},
+  {id:310,cursos:["4ESO"],cat:"Deportes",texto:"Táctica en juego reducido: participa en un 3x3 o 4x4 aplicando un objetivo táctico concreto (apoyos, amplitud, desmarque o cobertura). Describe 2 acciones en las que lo aplicaste.",puntos:2,trimestre:1},
+  {id:311,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Recuperar también es entrenar: aplica tras 3 sesiones dos estrategias de recuperación (vuelta a la calma, movilidad, hidratación, descanso activo) y valora cuál te resulta más útil.",puntos:1,trimestre:1},
+  {id:312,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Fitness en redes: analiza una publicación o vídeo de entrenamiento. Identifica objetivo, nivel de exigencia, información que falta y una adaptación para una persona principiante.",puntos:1.5,trimestre:1},
+
+  // 4º ESO · 2º trimestre
+  {id:313,cursos:["4ESO"],cat:"Condición Física",texto:"Sesión completa: diseña y ejecuta una sesión de 35-40 minutos con calentamiento, parte principal y vuelta a la calma. Incluye objetivo, tiempos y RPE final.",puntos:2,trimestre:2},
+  {id:314,cursos:["4ESO"],cat:"Condición Física",texto:"Pacing: planifica cómo repartirías el esfuerzo en 20 minutos de actividad continua o interválica, ejecútalo y compara el plan con lo que realmente ocurrió.",puntos:2,trimestre:2},
+  {id:315,cursos:["4ESO"],cat:"Condición Física",texto:"Movilidad específica: crea una rutina de 12 minutos centrada en 3 zonas corporales relacionadas con tu actividad habitual. Realízala 4 veces en dos semanas.",puntos:1.5,trimestre:2},
+  {id:316,cursos:["4ESO"],cat:"Condición Física",texto:"Movilidad cotidiana: durante dos semanas suma al menos 6 desplazamientos activos de 20 minutos o más, siempre que la ruta sea segura. Registra fecha y duración.",puntos:1.5,trimestre:2},
+  {id:317,cursos:["4ESO"],cat:"Condición Física",texto:"Diario de entrenamiento breve: registra 4 sesiones en dos semanas con actividad, duración, RPE y una frase sobre cómo ajustarías la siguiente.",puntos:2,trimestre:2},
+  {id:318,cursos:["4ESO"],cat:"Deportes",texto:"Entrena a un compañero: dirige 15 minutos de práctica de una habilidad deportiva utilizando 3 consignas técnicas. Recoge qué mejoró y qué cambiarías como entrenador.",puntos:2,trimestre:2},
+  {id:319,cursos:["4ESO"],cat:"Deportes",texto:"Arbitraje práctico: arbitra o supervisa al menos 20 minutos de un juego deportivo. Registra 3 decisiones y la regla aplicada en cada una.",puntos:2,trimestre:2},
+  {id:320,cursos:["4ESO"],cat:"Deportes",texto:"Antes y después: diseña un ejercicio técnico de tu deporte, mide un resultado inicial, practica 15-20 minutos y repite la medición con el mismo criterio.",puntos:2,trimestre:2},
+  {id:321,cursos:["4ESO"],cat:"Deportes",texto:"Organización de juego: prepara un partido o reto 4x4 con roles, reglas básicas, tiempos y sistema de rotación. Valora participación y juego limpio.",puntos:2,trimestre:2},
+  {id:322,cursos:["4ESO"],cat:"Deportes",texto:"Deporte alternativo: prueba una actividad poco habitual para ti y compárala con un deporte conocido en intensidad, coordinación, toma de decisiones y cooperación.",puntos:2,trimestre:2},
+  {id:323,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Día activo realista: diseña un día de estudio que incluya pausas de movimiento, actividad física y recuperación sin quitar horas esenciales de descanso o trabajo.",puntos:1.5,trimestre:2},
+  {id:324,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Bebidas deportivas, sin publicidad: compara dos etiquetas de bebidas destinadas al deporte. Analiza azúcar, cafeína si la hay y mensaje comercial; explica en qué situaciones el agua sigue siendo suficiente.",puntos:1.5,trimestre:2},
+
+  // 4º ESO · 3er trimestre
+  {id:325,cursos:["4ESO"],cat:"Condición Física",texto:"Resistencia con autonomía: completa 2 sesiones de 35 minutos a intensidad moderada. Puedes elegir carrera, bici, natación, elíptica u otra opción equivalente.",puntos:1.5,trimestre:3},
+  {id:326,cursos:["4ESO"],cat:"Condición Física",texto:"Agilidad y control: diseña un circuito corto con cambios de dirección, frenadas y aceleraciones. Realiza 4-6 intentos con recuperación completa y prioriza la técnica.",puntos:1.5,trimestre:3},
+  {id:327,cursos:["4ESO"],cat:"Condición Física",texto:"Progresión de fuerza: repite la misma sesión de 6 ejercicios al inicio y tres semanas después. Compara técnica, control, RPE y volumen, sin competir por cargas máximas.",puntos:2,trimestre:3},
+  {id:328,cursos:["4ESO"],cat:"Condición Física",texto:"Plan de 2 semanas: organiza 4 sesiones combinando resistencia, fuerza y movilidad. Ejecuta el plan y explica qué adaptación hiciste sobre la marcha y por qué.",puntos:2,trimestre:3},
+  {id:329,cursos:["4ESO"],cat:"Condición Física",texto:"Triana activa: diseña y realiza una ruta segura de 45-60 minutos por el entorno caminando, corriendo suavemente o en bici. Registra recorrido y una decisión de seguridad vial.",puntos:2,trimestre:3},
+  {id:330,cursos:["4ESO"],cat:"Deportes",texto:"Autoanálisis técnico: graba o describe dos intentos de una habilidad deportiva, identifica un aspecto técnico a mejorar y repite tras practicarlo.",puntos:2,trimestre:3},
+  {id:331,cursos:["4ESO"],cat:"Deportes",texto:"Plan táctico: antes de un juego reducido, acuerda con tu equipo una idea táctica sencilla. Juega, observa si funciona y explica un ajuste posterior.",puntos:2,trimestre:3},
+  {id:332,cursos:["4ESO"],cat:"Deportes",texto:"Precisión bajo control: realiza 30 lanzamientos, servicios o golpeos a zonas objetivo. Calcula porcentaje de acierto total y por zona.",puntos:1.5,trimestre:3},
+  {id:333,cursos:["4ESO"],cat:"Deportes",texto:"Lidera el calentamiento: diseña y dirige 12 minutos de calentamiento para un deporte concreto, justificando progresión y especificidad.",puntos:2,trimestre:3},
+  {id:334,cursos:["4ESO"],cat:"Deportes",texto:"Mini-competición: organiza un formato breve (liga, eliminatoria o retos por estaciones) con normas, tiempos, roles y un criterio explícito de juego limpio.",puntos:2,trimestre:3},
+  {id:335,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Influencer vs evidencia: elige una recomendación de fitness de redes y separa qué es dato, qué es opinión o publicidad y qué información necesitarías para valorar si es adecuada.",puntos:1.5,trimestre:3},
+  {id:336,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Plan activo de verano: diseña una semana realista con 3 momentos de actividad física, opciones ante el calor y alternativas sin coste. El objetivo es adherencia, no rendimiento máximo.",puntos:1.5,trimestre:3}
 ];
-const CATEGORIAS = ["Condición Física","Deportes","Nutrición"];
+
+const RETOS = [
+  ...RETOS_ANTERIORES.map(r => ({...r, deprecated:true})),
+  ...RETOS_NUEVOS
+];
+const CATEGORIAS = ["Condición Física","Deportes","Hábitos saludables"];
 
 /* ======================= CONFIG FIREBASE ======================= */
 const FIREBASE_CONFIG = {
@@ -845,7 +937,7 @@ function estadoDe(retoId){
 }
 
 function renderAlumno(){
-  const retosTrimestre = RETOS.filter(r=>r.trimestre===trimestreActivo);
+  const retosTrimestre = RETOS.filter(r=>r.trimestre===trimestreActivo && !r.deprecated && (!r.cursos || r.cursos.includes(alumno.curso)));
   document.getElementById('alumnoInfo').textContent = alumno.nombre + ' · ' + alumno.curso + ' ' + alumno.clase + ' · Trimestre ' + trimestreActivo;
   const total = retosTrimestre.filter(r=>{
     const d = misRetosData[r.id];
@@ -893,13 +985,6 @@ function renderAlumno(){
   renderTabs();
   const cont = document.getElementById('listaRetos');
   cont.innerHTML = '';
-  if(catActiva === 'Nutrición'){
-    const aviso = document.createElement('p');
-    aviso.className = 'small';
-    aviso.style.cssText = 'color:var(--coral);font-weight:600;margin-bottom:12px;';
-    aviso.textContent = '⚠ Los retos de Nutrición cuentan como máximo 2 puntos para la nota, aunque hagas más. Para sacar buena nota necesitas también retos de Condición Física y/o Deporte.';
-    cont.appendChild(aviso);
-  }
   retosTrimestre.filter(r=>r.cat===catActiva).forEach(reto=>{
     const yaElegido = !!misRetosData[reto.id];
     const div = document.createElement('div');
@@ -1049,9 +1134,9 @@ function renderTablaRetos(){
   if(!tbody) return;
   tbody.innerHTML = '';
   const t = trimestreFiltro();
-  RETOS.filter(r=>t===null || r.trimestre===t).forEach(reto=>{
+  RETOS.filter(r=>!r.deprecated && (t===null || r.trimestre===t)).forEach(reto=>{
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>#${reto.id}</td><td>${reto.cat}</td><td>${reto.texto}</td><td>${reto.puntos}</td>`;
+    tr.innerHTML = `<td>#${reto.id}</td><td>${reto.cursos ? reto.cursos.join(' / ') : '—'}</td><td>${reto.cat}</td><td>${reto.texto}</td><td>${reto.puntos}</td>`;
     tbody.appendChild(tr);
   });
 }
@@ -1190,17 +1275,13 @@ function renderEvaluacion(){
     const retos = retosIds.map(id=>a.retos[id]);
     const validados = retos.filter(d=>d.validadoProfe);
     const nValidados = validados.length;
-    const TOPE_NUTRICION = 2; // Nutrición cuenta como máximo 2 puntos para la nota; el resto debe salir de Condición Física y Deporte
-    let puntosNutricion = 0, puntosResto = 0;
+    let puntosAcum = 0;
     retosIds.forEach(retoId=>{
       const d = a.retos[retoId];
       if(!d.validadoProfe) return;
       const reto = RETOS.find(r=>r.id==retoId);
-      const pts = reto ? reto.puntos : 1;
-      if(reto && reto.cat === 'Nutrición') puntosNutricion += pts;
-      else puntosResto += pts;
+      puntosAcum += reto ? reto.puntos : 1;
     });
-    const puntosAcum = puntosResto + Math.min(puntosNutricion, TOPE_NUTRICION);
 
     // Criterio 1: puntos de dificultad acumulados, interpolado de forma discreta
     let c1;
@@ -1212,7 +1293,7 @@ function renderEvaluacion(){
     // Criterio 2: % de retos validados con evidencia completa (foto o comentario + adulto)
     let c2 = 0;
     if(nValidados > 0){
-      const conEvidencia = validados.filter(d=>(d.comentario || d.foto) && d.adulto).length;
+      const conEvidencia = validados.filter(d=>(d.comentario || d.foto)).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
 
@@ -1265,7 +1346,7 @@ function exportGradesCSV(){
     c1 = redondearNotaDiscreta(c1);
     let c2 = 0;
     if(nValidados > 0){
-      const conEvidencia = validados.filter(d=>(d.comentario || d.foto) && d.adulto).length;
+      const conEvidencia = validados.filter(d=>(d.comentario || d.foto)).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
     const notaFinal = redondearNotaDiscreta((c1+c2)/2);
