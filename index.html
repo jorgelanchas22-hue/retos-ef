@@ -320,7 +320,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
               <input type="number" id="umbral6" value="5" min="1" step="0.5" onchange="renderProfesor()">
             </div>
           </div>
-          <p class="small">Criterio 2 · Calidad/constancia: % de los retos validados con evidencia suficiente (foto/captura o comentario descriptivo).</p>
+          <p class="small">Criterio 2 · Calidad/constancia: % de los retos validados con evidencia suficiente (enlace de Drive, comentario descriptivo o evidencia antigua).</p>
           
         </div>
         <div class="filters">
@@ -1431,6 +1431,17 @@ function renderResumen(){
         totalElegidos++;
       }
     });
+    Object.values(a.propios||{}).forEach(r=>{
+      const tf=trimestreFiltro();
+      if(tf!==null && r.trimestre!==tf) return;
+      if(r.estadoAprobacion!=='aprobado') return;
+      algo=true;
+      if(r.validadoProfe){
+        totalValidados++;
+        porCategoria[r.categoria]=(porCategoria[r.categoria]||0)+1;
+      }else if(r.estado==='completado') totalCompletados++;
+      else totalElegidos++;
+    });
     if(algo) porClase[claseKey].elegidos++;
   });
 
@@ -1476,8 +1487,10 @@ function renderEvaluacion(){
     const a = todosAlumnosData[alId];
     const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
     const retos = retosIds.map(id=>a.retos[id]);
+    const propios = Object.values(a.propios||{}).filter(r=>r.trimestre===t && r.estadoAprobacion==='aprobado');
     const validados = retos.filter(d=>d.validadoProfe);
-    const nValidados = validados.length;
+    const propiosValidados = propios.filter(d=>d.validadoProfe);
+    const nValidados = validados.length + propiosValidados.length;
     let puntosAcum = 0;
     retosIds.forEach(retoId=>{
       const d = a.retos[retoId];
@@ -1485,6 +1498,7 @@ function renderEvaluacion(){
       const reto = RETOS.find(r=>r.id==retoId);
       puntosAcum += reto ? reto.puntos : 1;
     });
+    propiosValidados.forEach(r=>{ puntosAcum += parseFloat(r.puntos)||0; });
 
     // Criterio 1: puntos de dificultad acumulados, interpolado de forma discreta
     let c1;
@@ -1493,10 +1507,14 @@ function renderEvaluacion(){
     else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
     c1 = redondearNotaDiscreta(c1);
 
-    // Criterio 2: % de retos validados con evidencia completa (foto o comentario + adulto)
+    // Criterio 2: % de retos validados con evidencia suficiente
     let c2 = 0;
     if(nValidados > 0){
-      const conEvidencia = validados.filter(d=>(d.comentario || d.foto)).length;
+      const todasEvidencias = validados.concat(propiosValidados);
+      const conEvidencia = todasEvidencias.filter(d=>{
+        const v=d.videos||{};
+        return d.comentario || v.inicio || v.progreso || v.final || d.foto;
+      }).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
 
@@ -1529,8 +1547,10 @@ function exportGradesCSV(){
     const a = todosAlumnosData[alId];
     const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
     const retos = retosIds.map(id=>a.retos[id]);
+    const propios = Object.values(a.propios||{}).filter(r=>r.trimestre===t && r.estadoAprobacion==='aprobado');
     const validados = retos.filter(d=>d.validadoProfe);
-    const nValidados = validados.length;
+    const propiosValidados = propios.filter(d=>d.validadoProfe);
+    const nValidados = validados.length + propiosValidados.length;
     let puntosAcum = 0;
     retosIds.forEach(retoId=>{
       const d = a.retos[retoId];
@@ -1538,6 +1558,7 @@ function exportGradesCSV(){
       const reto = RETOS.find(r=>r.id==retoId);
       puntosAcum += reto ? reto.puntos : 1;
     });
+    propiosValidados.forEach(r=>{ puntosAcum += parseFloat(r.puntos)||0; });
     let c1;
     if(puntosAcum >= umbral10) c1 = 10;
     else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
@@ -1545,7 +1566,11 @@ function exportGradesCSV(){
     c1 = redondearNotaDiscreta(c1);
     let c2 = 0;
     if(nValidados > 0){
-      const conEvidencia = validados.filter(d=>(d.comentario || d.foto)).length;
+      const todasEvidencias = validados.concat(propiosValidados);
+      const conEvidencia = todasEvidencias.filter(d=>{
+        const v=d.videos||{};
+        return d.comentario || v.inicio || v.progreso || v.final || d.foto;
+      }).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
     const notaFinal = redondearNotaDiscreta((c1+c2)/2);
@@ -1574,7 +1599,7 @@ function validarReto(alId, retoId){
 }
 
 function exportCSV(){
-  let rows = [['Alumno','Curso','Clase','Reto','Categoria','Estado','Comentario','Adulto','Fecha']];
+  let rows = [['Alumno','Curso','Clase','Reto','Categoria','Estado','Comentario','VideosDrive','Fecha']];
   alumnosFiltrados().forEach(alId=>{
     const a = todosAlumnosData[alId];
     Object.keys(a.retos||{}).forEach(retoId=>{
@@ -1582,7 +1607,7 @@ function exportCSV(){
       const d = a.retos[retoId];
       const reto = RETOS.find(r=>r.id==retoId);
       const est = d.validadoProfe ? 'validado' : (d.estado==='completado' ? 'completado' : 'elegido');
-      rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), d.adulto||'', d.fecha||'']);
+      const v=d.videos||{}; const links=[v.inicio,v.progreso,v.final].filter(Boolean).join(' | '); rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), links.replace(/,/g,';'), d.fecha||'']);
     });
   });
   const csv = rows.map(r=>r.join(',')).join('\n');
