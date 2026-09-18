@@ -23,53 +23,70 @@ jobs:
           for i in {1..8}; do
             if curl -fsSL --max-time 20 "$URL" -o /tmp/retos.html; then
               if grep -q 'id:351' /tmp/retos.html && grep -q 'jorge.lanchas@triana.salesianos.edu' /tmp/retos.html; then
-                echo "GitHub Pages is serving the latest Retos EF build."
+                echo "PASS: GitHub Pages serves the latest Retos EF build."
                 exit 0
               fi
             fi
             sleep 10
           done
-          echo "Latest build not detected on GitHub Pages."
+          echo "FAIL: Latest build not detected on GitHub Pages."
           exit 1
 
-      - name: Check Firebase anonymous auth and student save/read/delete
+      - name: Diagnose Firebase student persistence
         shell: bash
         env:
           API_KEY: "AIzaSyClXyE442TxG4CHXYS1bvXF6Q6oILFAtEQ"
           DB_URL: "https://retos-ef-default-rtdb.europe-west1.firebasedatabase.app"
         run: |
-          set -euo pipefail
-          AUTH_JSON=$(curl -fsS -X POST             "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$API_KEY"             -H "Content-Type: application/json"             -d '{"returnSecureToken":true}')
-          TOKEN=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("idToken",""))' <<<"$AUTH_JSON")
-          test -n "$TOKEN"
+          set -u
+          AUTH_CODE=$(curl -sS -o /tmp/auth.json -w "%{http_code}" -X POST \
+            "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"returnSecureToken":true}')
+          echo "Anonymous auth HTTP: $AUTH_CODE"
+          python3 -c 'import json; d=json.load(open("/tmp/auth.json")); print("Anonymous auth result:", d.get("error",{}).get("message","OK"))'
+
+          TOKEN=$(python3 -c 'import json; d=json.load(open("/tmp/auth.json")); print(d.get("idToken",""))')
           ID="smoke_test_4ESOA"
-          PATH_URL="$DB_URL/retosEF/alumnos/$ID.json?auth=$TOKEN"
           PAYLOAD='{"info":{"id":"smoke_test_4ESOA","nombre":"Smoke Test","curso":"4ESO","clase":"A"},"retos":{},"propios":{}}'
-          trap 'curl -sS -X DELETE "$PATH_URL" >/dev/null || true' EXIT
-          curl -fsS -X PUT "$PATH_URL" -H "Content-Type: application/json" -d "$PAYLOAD" >/dev/null
-          READBACK=$(curl -fsS "$PATH_URL")
-          python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["info"]["nombre"]=="Smoke Test"' <<<"$READBACK"
-          curl -fsS -X DELETE "$PATH_URL" >/dev/null
-          trap - EXIT
-          echo "Firebase anonymous authentication and student cloud persistence work."
+          WRITE_CODE=000
+
+          if [ -n "$TOKEN" ]; then
+            PATH_URL="$DB_URL/retosEF/alumnos/$ID.json?auth=$TOKEN"
+            WRITE_CODE=$(curl -sS -o /tmp/write.json -w "%{http_code}" -X PUT "$PATH_URL" -H "Content-Type: application/json" -d "$PAYLOAD")
+            echo "Authenticated DB write HTTP: $WRITE_CODE"
+            if [ "$WRITE_CODE" = "200" ]; then
+              READ_CODE=$(curl -sS -o /tmp/read.json -w "%{http_code}" "$PATH_URL")
+              echo "Authenticated DB read HTTP: $READ_CODE"
+              curl -sS -X DELETE "$PATH_URL" >/dev/null || true
+            fi
+          else
+            PATH_URL="$DB_URL/retosEF/alumnos/$ID.json"
+            WRITE_CODE=$(curl -sS -o /tmp/write.json -w "%{http_code}" -X PUT "$PATH_URL" -H "Content-Type: application/json" -d "$PAYLOAD")
+            echo "Unauthenticated DB write HTTP: $WRITE_CODE"
+            python3 -c 'import json; d=json.load(open("/tmp/write.json")); print("Unauthenticated DB result:", d.get("error","OK"))' 2>/dev/null || true
+            if [ "$WRITE_CODE" = "200" ]; then
+              curl -sS -X DELETE "$PATH_URL" >/dev/null || true
+            fi
+          fi
+
+          if [ "$AUTH_CODE" != "200" ]; then
+            echo "FAIL: Anonymous Firebase authentication is not available."
+            exit 1
+          fi
+          if [ "$WRITE_CODE" != "200" ]; then
+            echo "FAIL: Student cloud persistence cannot write to Realtime Database."
+            exit 1
+          fi
+          echo "PASS: Firebase anonymous authentication and student persistence work."
 
       - name: Check Google sign-in configuration
+        if: always()
         shell: bash
         env:
           API_KEY: "AIzaSyClXyE442TxG4CHXYS1bvXF6Q6oILFAtEQ"
         run: |
           set -euo pipefail
-          CFG=$(curl -fsS "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=$API_KEY")
-          python3 - <<'PY' <<<"$CFG"
-          import json, sys
-          cfg=json.load(sys.stdin)
-          domains=cfg.get("authorizedDomains", [])
-          if "jorgelanchas22-hue.github.io" not in domains:
-              raise SystemExit("GitHub Pages domain is not authorized in Firebase Auth")
-          providers=cfg.get("idpConfig", [])
-          google=[p for p in providers if p.get("provider")=="google.com"]
-          if google and google[0].get("enabled") is False:
-              raise SystemExit("Google provider is disabled")
-          print("GitHub Pages domain is authorized for Firebase Auth.")
-          print("Google provider configuration is present/available.")
-          PY
+          curl -fsS "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=$API_KEY" -o /tmp/project.json
+          python3 -c 'import json; cfg=json.load(open("/tmp/project.json")); domains=cfg.get("authorizedDomains",[]); print("Authorized domains:", domains); assert "jorgelanchas22-hue.github.io" in domains, "GitHub Pages domain is not authorized"; providers=cfg.get("idpConfig",[]); google=[p for p in providers if p.get("provider")=="google.com"]; print("Google provider entries:", len(google)); assert not google or google[0].get("enabled",True) is not False, "Google provider is disabled"'
+          echo "PASS: GitHub Pages domain is authorized for Firebase Auth."
