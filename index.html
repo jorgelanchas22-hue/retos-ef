@@ -297,7 +297,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         <div style="overflow-x:auto;">
           <table id="tablaProfesor">
             <thead>
-              <tr><th>Alumno</th><th>Curso</th><th>Reto</th><th>Estado</th><th>Evidencia</th><th>Adulto</th><th>Acción</th></tr>
+              <tr><th>Alumno</th><th>Curso</th><th>Reto</th><th>Estado</th><th>Comentario</th><th>Vídeos</th><th>Acción</th></tr>
             </thead>
             <tbody id="tbodyProfesor"></tbody>
           </table>
@@ -1066,22 +1066,26 @@ function renderAlumno(){
     let pillTxt = est==='validado' ? 'Validado' : (est==='completado' ? 'Pendiente de validar' : 'En progreso');
     div.innerHTML = `<div class="num">RETO #${reto.id} · ${reto.cat} · ${reto.puntos} pt${reto.puntos!==1?'s':''}</div>
       <p>${reto.texto}</p>
-      <span class="pill ${pillClass}">${pillTxt}</span>`;
-    if(est==='elegido'){
+      <span class="pill ${pillClass}">${pillTxt}</span>\n      ${htmlVideos((misRetosData[id]||{}).videos)}`;
+    if(est!=='validado'){
       const btn = document.createElement('button');
       btn.className='btn btn-lime btn-sm';
-      btn.textContent='Marcar como completado';
+      btn.textContent=est==='completado' ? 'Actualizar evidencia' : 'Registrar progreso';
       btn.onclick=()=>abrirModal(reto.id);
       div.appendChild(btn);
-      const btnQuitar = document.createElement('button');
-      btnQuitar.className='btn btn-ghost btn-sm';
-      btnQuitar.style.marginLeft='8px';
-      btnQuitar.textContent='Quitar';
-      btnQuitar.onclick=()=>quitarReto(reto.id);
-      div.appendChild(btnQuitar);
+      if(est==='elegido'){
+        const btnQuitar = document.createElement('button');
+        btnQuitar.className='btn btn-ghost btn-sm';
+        btnQuitar.style.marginLeft='8px';
+        btnQuitar.textContent='Quitar';
+        btnQuitar.onclick=()=>quitarReto(reto.id);
+        div.appendChild(btnQuitar);
+      }
     }
     misCont.appendChild(div);
   });
+
+  renderRetosPropiosAlumno();
 
   // Lista para elegir (solo del trimestre activo)
   renderTabs();
@@ -1239,11 +1243,12 @@ function renderRetosPropiosAlumno(){
 
 /* ======================= VISTA PROFESOR ======================= */
 function cambiarTabProfe(tab){
-  ['resumen','registro','evaluacion','tabla','alumnado'].forEach(t=>{
+  ['resumen','registro','evaluacion','tabla','propios','alumnado','guia'].forEach(t=>{
     document.getElementById('sub'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('hidden', t!==tab);
     document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
   });
   if(tab==='alumnado') cargarTextareaLista();
+  if(tab==='propios') renderRetosPropiosProfesor();
 }
 
 function alumnosFiltrados(){
@@ -1275,6 +1280,58 @@ function renderProfesor(){
   renderResumen();
   renderEvaluacion();
   renderTablaRetos();
+  renderRetosPropiosProfesor();
+}
+
+
+function persistirAlumnoProfesor(alId){
+  const a=todosAlumnosData[alId];
+  if(!a) return;
+  if(fbEnabled) db.ref('retosEF/alumnos/'+alId).set(a);
+  else localStorage.setItem(localKeyAlumno(alId),JSON.stringify(a));
+}
+function enlacesEvidenciaHTML(d){ return htmlVideos((d||{}).videos) || '<span class="small">Sin vídeos</span>'; }
+function renderRetosPropiosProfesor(){
+  const tbody=document.getElementById('tbodyRetosPropios');
+  if(!tbody) return;
+  tbody.innerHTML='';
+  const t=trimestreFiltro();
+  alumnosFiltrados().forEach(alId=>{
+    const a=todosAlumnosData[alId];
+    Object.values(a.propios||{}).forEach(r=>{
+      if(t!==null && r.trimestre!==t) return;
+      const tr=document.createElement('tr');
+      const estado=r.estadoAprobacion==='pendiente'?'Pendiente':r.estadoAprobacion==='rechazado'?'No aprobado':(r.validadoProfe?'Validado':(r.estado==='completado'?'Pendiente de validar':'Aprobado'));
+      tr.innerHTML='<td>'+a.info.nombre+'</td><td>'+a.info.curso+' '+a.info.clase+'</td><td><b>'+r.titulo+'</b><br><span class="small">'+r.objetivo+'</span><br><span class="small"><b>Por qué:</b> '+r.porQue+'</span><br><span class="small"><b>Plan:</b> '+r.plan+'</span></td><td>'+estado+(r.puntos?' · '+r.puntos+' pts':'')+(r.comentarioProfe?'<br><span class="small">'+r.comentarioProfe+'</span>':'')+'</td><td>'+enlacesEvidenciaHTML(r)+'</td><td></td>';
+      const td=tr.lastElementChild;
+      if(r.estadoAprobacion==='pendiente'){
+        [1,1.5,2].forEach(pts=>{
+          const b=document.createElement('button'); b.className='btn btn-lime btn-sm'; b.style.margin='2px'; b.textContent='Aprobar '+pts; b.onclick=()=>aprobarRetoPropio(alId,r.id,pts); td.appendChild(b);
+        });
+        const br=document.createElement('button'); br.className='btn btn-ghost btn-sm'; br.style.margin='2px'; br.textContent='No aprobar'; br.onclick=()=>rechazarRetoPropio(alId,r.id); td.appendChild(br);
+      }else if(r.estadoAprobacion==='aprobado'&&r.estado==='completado'&&!r.validadoProfe){
+        const bv=document.createElement('button'); bv.className='btn btn-lime btn-sm'; bv.textContent='Validar reto'; bv.onclick=()=>validarRetoPropio(alId,r.id); td.appendChild(bv);
+      }
+      tbody.appendChild(tr);
+    });
+  });
+  if(!tbody.children.length) tbody.innerHTML='<tr><td colspan="6" class="small" style="text-align:center;padding:18px;">No hay retos personales en este filtro.</td></tr>';
+}
+function aprobarRetoPropio(alId,id,puntos){
+  const r=todosAlumnosData[alId].propios[id];
+  r.estadoAprobacion='aprobado'; r.estado='elegido'; r.puntos=puntos; r.comentarioProfe='Reto aprobado.';
+  persistirAlumnoProfesor(alId); renderProfesor();
+}
+function rechazarRetoPropio(alId,id){
+  const motivo=prompt('Motivo o indicación para el alumno (opcional):','Reformula el reto para que sea más concreto o adecuado.');
+  const r=todosAlumnosData[alId].propios[id];
+  r.estadoAprobacion='rechazado'; r.comentarioProfe=motivo||'Reto no aprobado.';
+  persistirAlumnoProfesor(alId); renderProfesor();
+}
+function validarRetoPropio(alId,id){
+  const r=todosAlumnosData[alId].propios[id];
+  r.validadoProfe=true; r.estado='completado';
+  persistirAlumnoProfesor(alId); renderProfesor();
 }
 
 function renderTablaRetos(){
@@ -1310,9 +1367,7 @@ function renderRegistro(){
         <td>${a.info.curso} ${a.info.clase}</td>
         <td>#${retoId} ${reto ? '· '+reto.texto.slice(0,40)+'…' : ''}</td>
         <td><span class="status-dot" style="background:${color}"></span>${est}</td>
-        <td>${evidenciaTxt}</td>
-        <td>${d.adulto || '—'}</td>
-        <td></td>`;
+        <td>${d.comentario || '—'}</td>\n        <td>${htmlVideos(d.videos) || (d.foto ? '📷 evidencia antigua' : '—')}</td>\n        <td></td>`;
       const tdAccion = tr.lastElementChild;
       if(est==='completado'){
         const btn = document.createElement('button');
