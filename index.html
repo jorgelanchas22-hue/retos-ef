@@ -180,7 +180,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <div class="guide-step"><b>4. Strava y otras apps son opcionales.</b> No necesitas crear una cuenta para participar. Si usas una app deportiva, evita compartir públicamente tu domicilio, el inicio/final exactos de una ruta o datos de salud innecesarios.</div>
       <div class="guide-step"><b>5. Los vídeos no se publican en redes.</b> Súbelos a tu Drive, compártelos como lector con <b>jorge.lanchas@triana.salesianos.edu</b> y pega aquí el enlace.</div>
       <div class="guide-step"><b>6. La app guarda los enlaces, no los archivos.</b> Cuando termines, envía el reto a validar. El profesor revisará la evidencia.</div>
-      <div class="guide-step"><b>7. Cuida la privacidad.</b> Graba solo lo necesario para demostrar el reto y evita que aparezcan otras personas sin necesidad.</div>
+      <div class="guide-step"><b>7. Gimnasio en 4.º ESO.</b> Los retos de gimnasio valoran técnica, planificación, constancia y progreso personal. No puntúa levantar más peso que otros ni hacer pruebas de carga máxima.</div>
+      <div class="guide-step"><b>8. Cuida la privacidad.</b> Graba solo lo necesario para demostrar el reto y evita que aparezcan otras personas sin necesidad.</div>
     </details>
 
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Mis retos</h2></div>
@@ -373,6 +374,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
             <option value="">Todas las categorías</option>
             <option value="Condición Física">Condición Física</option>
             <option value="Deportes">Deportes</option>
+            <option value="Gimnasio y entrenamiento">Gimnasio y entrenamiento</option>
             <option value="Hábitos saludables">Hábitos saludables</option>
           </select>
           <input id="tablaBuscar" type="search" placeholder="Buscar en los retos..." oninput="renderTablaRetos()" style="max-width:260px;margin:0;">
@@ -422,6 +424,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
           <div class="guide-step"><b>Vídeos de progreso.</b> Cada reto puede llevar enlaces de Drive para Inicio → Progreso → Final. También puede añadirse un registro de Strava/Garmin/otra app cuando tenga sentido. La app almacena únicamente los enlaces.</div>
           <div class="guide-step"><b>Drive.</b> El alumno sube el vídeo a su Drive y lo comparte como lector contigo. En tu Drive <b>RETOS EF 2026-2027</b> hay una carpeta individual para cada uno de los 178 alumnos, organizada por curso y grupo.</div>
           <div class="guide-step"><b>Privacidad.</b> Las carpetas generales no se comparten con las clases. Los vídeos no se publican en TikTok ni en otras redes desde esta app.</div>
+          <div class="guide-step"><b>Gimnasio y entrenamiento.</b> En 4.º ESO hay 15 retos específicos repartidos en los tres trimestres. Se valora técnica, planificación, constancia y progresión personal; no cargas máximas, comparaciones de fuerza ni cambios corporales.</div>
           <div class="guide-step"><b>Validación.</b> El alumno registra progreso; cuando marca el reto como terminado pasa a “Pendiente de validar”. Tú compruebas la evidencia y lo validas.</div>
           <div style="margin-top:14px;"><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1688Z7AhRuAI7ZjE56qr9GQ9D2ltGiHdH">Abrir carpeta RETOS EF en Drive</a></div>
         </div>
@@ -479,6 +482,7 @@ Juan López Ruiz
     <select id="rpCategoria">
       <option value="Condición Física">Condición Física</option>
       <option value="Deportes">Deportes</option>
+      <option id="rpCatGym" value="Gimnasio y entrenamiento">Gimnasio y entrenamiento</option>
       <option value="Hábitos saludables">Hábitos saludables</option>
     </select>
     <div style="display:flex;gap:10px;margin-top:8px;">
@@ -719,14 +723,35 @@ const RETOS_NUEVOS = [
   {id:333,cursos:["4ESO"],cat:"Deportes",texto:"Lidera el calentamiento: diseña y dirige 12 minutos de calentamiento para un deporte concreto, justificando progresión y especificidad.",puntos:2,trimestre:3},
   {id:334,cursos:["4ESO"],cat:"Deportes",texto:"Mini-competición: organiza un formato breve (liga, eliminatoria o retos por estaciones) con normas, tiempos, roles y un criterio explícito de juego limpio.",puntos:2,trimestre:3},
   {id:335,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Influencer vs evidencia: elige una recomendación de fitness de redes y separa qué es dato, qué es opinión o publicidad y qué información necesitarías para valorar si es adecuada.",puntos:1.5,trimestre:3},
-  {id:336,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Plan activo de verano: diseña una semana realista con 3 momentos de actividad física, opciones ante el calor y alternativas sin coste. El objetivo es adherencia, no rendimiento máximo.",puntos:1.5,trimestre:3}
+  {id:336,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Plan activo de verano: diseña una semana realista con 3 momentos de actividad física, opciones ante el calor y alternativas sin coste. El objetivo es adherencia, no rendimiento máximo.",puntos:1.5,trimestre:3},
+
+  // 4º ESO · Gimnasio y entrenamiento · 1er trimestre
+  {id:337,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Técnica antes que peso: elige 2 ejercicios de fuerza que ya realices y muestra una ejecución controlada con una carga cómoda. Explica una corrección técnica importante en cada uno.",puntos:1.5,trimestre:1},
+  {id:338,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Full Body equilibrado: diseña y realiza una sesión que incluya un ejercicio de piernas, uno de empuje, uno de tracción y uno de core. Registra ejercicios, series y repeticiones.",puntos:2,trimestre:1},
+  {id:339,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Entrena con RPE: registra 3 sesiones indicando en cada una ejercicios, series, repeticiones y esfuerzo percibido de 1 a 10. Explica si el esfuerzo fue adecuado.",puntos:1.5,trimestre:1},
+  {id:340,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Caliento antes de entrenar: prepara y realiza un calentamiento de 8-10 minutos adaptado a tu sesión de gimnasio, con movilidad, activación y aproximación progresiva.",puntos:1,trimestre:1},
+  {id:341,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Constancia de dos semanas: planifica tus sesiones de gimnasio durante 2 semanas y comprueba cuántas consigues realizar. Se valora la constancia y la organización, no los kilos levantados.",puntos:2,trimestre:1},
+
+  // 4º ESO · Gimnasio y entrenamiento · 2º trimestre
+  {id:342,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Empuje y tirón: revisa una sesión tuya e incluye al menos un ejercicio de empuje y otro de tracción. Explica por qué conviene equilibrar ambos patrones.",puntos:1.5,trimestre:2},
+  {id:343,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Piernas completas: diseña una sesión de tren inferior con varios patrones de movimiento y ejecútala con cargas que te permitan mantener una técnica controlada.",puntos:1.5,trimestre:2},
+  {id:344,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Core con control: realiza una rutina breve de 3-4 ejercicios de estabilidad del tronco. Prioriza posición y control antes que duración o número de repeticiones.",puntos:1,trimestre:2},
+  {id:345,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Analiza tu entrenamiento: revisa una semana de gimnasio e identifica qué trabajas más, qué trabajas menos y qué cambio sencillo harías para equilibrarla.",puntos:1.5,trimestre:2},
+  {id:346,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Tres semanas de progreso: elige un ejercicio y registra durante 3 semanas su evolución en técnica, repeticiones, control o carga moderada. No se permiten pruebas de carga máxima.",puntos:2,trimestre:2},
+
+  // 4º ESO · Gimnasio y entrenamiento · 3er trimestre
+  {id:347,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Mi semana de entrenamiento: diseña una semana realista con hasta 3 sesiones, indicando qué trabaja cada una y dónde colocarías los días de recuperación.",puntos:2,trimestre:3},
+  {id:348,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Sesión autónoma: prepara y completa una sesión de 35-45 minutos con calentamiento, fuerza general y vuelta a la calma. Registra lo realizado y tu RPE final.",puntos:2,trimestre:3},
+  {id:349,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Entrena a un compañero: enseña a otra persona 2 ejercicios sencillos utilizando indicaciones de postura, recorrido y control. No se trata de aumentar cargas.",puntos:2,trimestre:3},
+  {id:350,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Tu rutina, bajo la lupa: presenta una rutina que utilices habitualmente, explica qué pretende trabajar y propone dos cambios razonados después de lo aprendido en Educación Física.",puntos:2,trimestre:3},
+  {id:351,cursos:["4ESO"],cat:"Gimnasio y entrenamiento",texto:"Recuperación después de fuerza: tras 3 sesiones diferentes registra una estrategia sencilla de recuperación, movilidad o vuelta a la calma y valora cuál te ayuda más.",puntos:1.5,trimestre:3}
 ];
 
 const RETOS = [
   ...RETOS_ANTERIORES.map(r => ({...r, deprecated:true})),
   ...RETOS_NUEVOS
 ];
-const CATEGORIAS = ["Condición Física","Deportes","Hábitos saludables"];
+const CATEGORIAS = ["Condición Física","Deportes","Gimnasio y entrenamiento","Hábitos saludables"];
 
 /* ======================= CONFIG FIREBASE ======================= */
 const FIREBASE_CONFIG = {
@@ -1449,7 +1474,11 @@ function logout(){
 function renderTabs(){
   const cont = document.getElementById('tabsCategoria');
   cont.innerHTML = '';
-  CATEGORIAS.forEach(cat=>{
+  const categoriasDisponibles = CATEGORIAS.filter(cat =>
+    RETOS.some(r=>!r.deprecated && r.trimestre===trimestreActivo && r.cat===cat && (!r.cursos || r.cursos.includes(alumno.curso)))
+  );
+  if(!categoriasDisponibles.includes(catActiva)) catActiva = categoriasDisponibles[0] || "Condición Física";
+  categoriasDisponibles.forEach(cat=>{
     const t = document.createElement('div');
     t.className = 'tab' + (cat===catActiva ? ' active' : '');
     t.textContent = cat;
@@ -1701,6 +1730,8 @@ function guardarEvidencia(){
 function abrirModalRetoPropio(){
   ['rpTitulo','rpObjetivo','rpPorQue','rpPlan'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('rpCategoria').value='Condición Física';
+  const gymOpt=document.getElementById('rpCatGym');
+  if(gymOpt) gymOpt.hidden = !alumno || alumno.curso!=='4ESO';
   document.getElementById('modalRetoPropio').classList.remove('hidden');
 }
 function cerrarModalRetoPropio(){ document.getElementById('modalRetoPropio').classList.add('hidden'); }
