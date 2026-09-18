@@ -240,8 +240,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         <div class="tab active" id="tabResumen" onclick="cambiarTabProfe('resumen')">Resumen</div>
         <div class="tab" id="tabRegistro" onclick="cambiarTabProfe('registro')">Registro</div>
         <div class="tab" id="tabEvaluacion" onclick="cambiarTabProfe('evaluacion')">Evaluación</div>
-        <div class="tab" id="tabTabla" onclick="cambiarTabProfe('tabla')">Tabla de retos</div>
-        <div class="tab" id="tabPropios" onclick="cambiarTabProfe('propios')">Retos propuestos</div>
+        <div class="tab" id="tabTabla" onclick="cambiarTabProfe('tabla')">Todos los retos</div>
+        <div class="tab" id="tabPropios" onclick="cambiarTabProfe('propios')">Retos del alumnado</div>
         <div class="tab" id="tabAlumnado" onclick="cambiarTabProfe('alumnado')">Alumnado</div>
         <div class="tab" id="tabGuia" onclick="cambiarTabProfe('guia')">Cómo funciona</div>
       </div>
@@ -336,15 +336,45 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         </div>
       </div>
 
-      <!-- TABLA DE RETOS -->
+      <!-- TODOS LOS RETOS PROPUESTOS POR EL PROFESOR -->
       <div id="subTabla" class="hidden">
+        <div class="card" style="margin-top:16px;">
+          <h3 style="margin-top:0;font-size:16px;">Banco completo de retos</h3>
+          <p class="small">Aquí puedes revisar <b>todos los retos propuestos por el profesor</b> para 2.º ESO y 4.º ESO. Esta vista no depende del trimestre activo del alumnado.</p>
+          <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));margin-top:12px;">
+            <div class="card" style="padding:12px;"><div class="small">Total</div><div class="display" style="font-size:24px;" id="statRetosTotal">0</div></div>
+            <div class="card" style="padding:12px;"><div class="small">2.º ESO</div><div class="display" style="font-size:24px;" id="statRetos2">0</div></div>
+            <div class="card" style="padding:12px;"><div class="small">4.º ESO</div><div class="display" style="font-size:24px;" id="statRetos4">0</div></div>
+          </div>
+        </div>
+
         <div class="filters" style="margin-top:16px;">
+          <select id="tablaCurso" onchange="renderTablaRetos()">
+            <option value="">Todos los cursos</option>
+            <option value="2ESO">2.º ESO</option>
+            <option value="4ESO">4.º ESO</option>
+          </select>
+          <select id="tablaTrimestre" onchange="renderTablaRetos()">
+            <option value="">Los tres trimestres</option>
+            <option value="1">1.er trimestre</option>
+            <option value="2">2.º trimestre</option>
+            <option value="3">3.er trimestre</option>
+          </select>
+          <select id="tablaCategoria" onchange="renderTablaRetos()">
+            <option value="">Todas las categorías</option>
+            <option value="Condición Física">Condición Física</option>
+            <option value="Deportes">Deportes</option>
+            <option value="Hábitos saludables">Hábitos saludables</option>
+          </select>
+          <input id="tablaBuscar" type="search" placeholder="Buscar en los retos..." oninput="renderTablaRetos()" style="max-width:260px;margin:0;">
+          <button class="btn btn-ghost btn-sm" onclick="limpiarFiltrosTablaRetos()">Ver todos</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">Imprimir tabla</button>
         </div>
+        <p class="small" id="tablaRetosResultado"></p>
         <div style="overflow-x:auto;">
           <table id="tablaRetosCompleta">
             <thead>
-              <tr><th>Nº</th><th>Curso</th><th>Categoría</th><th>Reto</th><th>Puntos</th></tr>
+              <tr><th>Nº</th><th>Curso</th><th>Trimestre</th><th>Categoría</th><th>Reto</th><th>Puntos</th></tr>
             </thead>
             <tbody id="tbodyTablaRetos"></tbody>
           </table>
@@ -355,7 +385,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <!-- RETOS PROPUESTOS POR EL ALUMNADO -->
       <div id="subPropios" class="hidden">
         <div class="card" style="margin-top:16px;">
-          <h3 style="margin-top:0;font-size:15px;">Retos personales propuestos</h3>
+          <h3 style="margin-top:0;font-size:15px;">Retos propuestos por el alumnado</h3>
           <p class="small">Revisa cada propuesta. Puedes aprobarla con 1, 1,5 o 2 puntos, rechazarla o validar el reto cuando el alumno lo complete.</p>
           <div style="overflow-x:auto;">
             <table>
@@ -1530,16 +1560,61 @@ function validarRetoPropio(alId,id){
   persistirAlumnoProfesor(alId); renderProfesor();
 }
 
+function limpiarFiltrosTablaRetos(){
+  const ids=['tablaCurso','tablaTrimestre','tablaCategoria','tablaBuscar'];
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  renderTablaRetos();
+}
+
 function renderTablaRetos(){
-  const tbody = document.getElementById('tbodyTablaRetos');
+  const tbody=document.getElementById('tbodyTablaRetos');
   if(!tbody) return;
-  tbody.innerHTML = '';
-  const t = trimestreFiltro();
-  RETOS.filter(r=>!r.deprecated && (t===null || r.trimestre===t)).forEach(reto=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>#${reto.id}</td><td>${reto.cursos ? reto.cursos.join(' / ') : '—'}</td><td>${reto.cat}</td><td>${reto.texto}</td><td>${reto.puntos}</td>`;
+
+  const banco=RETOS.filter(r=>!r.deprecated);
+  const total2=banco.filter(r=>(r.cursos||[]).includes('2ESO')).length;
+  const total4=banco.filter(r=>(r.cursos||[]).includes('4ESO')).length;
+
+  const eTotal=document.getElementById('statRetosTotal');
+  const e2=document.getElementById('statRetos2');
+  const e4=document.getElementById('statRetos4');
+  if(eTotal) eTotal.textContent=banco.length;
+  if(e2) e2.textContent=total2;
+  if(e4) e4.textContent=total4;
+
+  const curso=(document.getElementById('tablaCurso')||{}).value || '';
+  const trimestre=(document.getElementById('tablaTrimestre')||{}).value || '';
+  const categoria=(document.getElementById('tablaCategoria')||{}).value || '';
+  const buscar=((document.getElementById('tablaBuscar')||{}).value || '').trim().toLowerCase();
+
+  const filtrados=banco.filter(r=>{
+    if(curso && !(r.cursos||[]).includes(curso)) return false;
+    if(trimestre && String(r.trimestre)!==String(trimestre)) return false;
+    if(categoria && r.cat!==categoria) return false;
+    if(buscar){
+      const texto=[r.id,(r.cursos||[]).join(' '),r.trimestre,r.cat,r.texto,r.puntos].join(' ').toLowerCase();
+      if(!texto.includes(buscar)) return false;
+    }
+    return true;
+  }).sort((a,b)=>{
+    const ca=(a.cursos||[])[0]||'';
+    const cb=(b.cursos||[])[0]||'';
+    return ca.localeCompare(cb) || a.trimestre-b.trimestre || a.id-b.id;
+  });
+
+  tbody.innerHTML='';
+  filtrados.forEach(reto=>{
+    const tr=document.createElement('tr');
+    const cursoTxt=(reto.cursos||[]).map(x=>x==='2ESO'?'2.º ESO':x==='4ESO'?'4.º ESO':x).join(' / ');
+    const trimestreTxt=reto.trimestre===1?'1.º':reto.trimestre===2?'2.º':'3.º';
+    tr.innerHTML=`<td>#${reto.id}</td><td><b>${cursoTxt}</b></td><td>${trimestreTxt}</td><td>${reto.cat}</td><td>${reto.texto}</td><td>${reto.puntos}</td>`;
     tbody.appendChild(tr);
   });
+
+  const res=document.getElementById('tablaRetosResultado');
+  if(res) res.textContent='Mostrando '+filtrados.length+' de '+banco.length+' retos.';
+  if(!filtrados.length){
+    tbody.innerHTML='<tr><td colspan="6" class="small" style="text-align:center;padding:20px;">No hay retos que coincidan con estos filtros.</td></tr>';
+  }
 }
 
 function renderRegistro(){
