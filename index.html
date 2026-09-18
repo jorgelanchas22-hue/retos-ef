@@ -1358,7 +1358,8 @@ function loginAlumno(){
       });
     }).catch(err=>{
       console.error('Error de autenticación anónima en Firebase:', err);
-      continuar();
+      document.getElementById('loginError').textContent = 'No se puede conectar con el registro del profesor. Inténtalo más tarde y no registres retos hasta que la conexión esté disponible.';
+      alumno = null;
     });
   } else {
     continuar();
