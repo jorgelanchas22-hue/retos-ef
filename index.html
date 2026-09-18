@@ -1328,17 +1328,13 @@ function exportGradesCSV(){
     const retos = retosIds.map(id=>a.retos[id]);
     const validados = retos.filter(d=>d.validadoProfe);
     const nValidados = validados.length;
-    const TOPE_NUTRICION = 2; // Nutrición cuenta como máximo 2 puntos para la nota; el resto debe salir de Condición Física y Deporte
-    let puntosNutricion = 0, puntosResto = 0;
+    let puntosAcum = 0;
     retosIds.forEach(retoId=>{
       const d = a.retos[retoId];
       if(!d.validadoProfe) return;
       const reto = RETOS.find(r=>r.id==retoId);
-      const pts = reto ? reto.puntos : 1;
-      if(reto && reto.cat === 'Nutrición') puntosNutricion += pts;
-      else puntosResto += pts;
+      puntosAcum += reto ? reto.puntos : 1;
     });
-    const puntosAcum = puntosResto + Math.min(puntosNutricion, TOPE_NUTRICION);
     let c1;
     if(puntosAcum >= umbral10) c1 = 10;
     else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
