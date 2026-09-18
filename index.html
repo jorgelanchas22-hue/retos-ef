@@ -1191,7 +1191,7 @@ function loginProfesor(){
       errorEl.textContent = (err && err.code === 'auth/popup-closed-by-user') ? 'Se cerró la ventana de Google.' : 'No se pudo iniciar sesión con Google.';
     });
   } else {
-    continuarProfesor();
+    errorEl.textContent = 'El acceso docente requiere Google. No se puede abrir el panel sin autenticar la cuenta autorizada.';
   }
 }
 
