@@ -88,5 +88,17 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsS "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getProjectConfig?key=$API_KEY" -o /tmp/project.json
-          python3 -c 'import json; cfg=json.load(open("/tmp/project.json")); domains=cfg.get("authorizedDomains",[]); print("Authorized domains:", domains); assert "jorgelanchas22-hue.github.io" in domains, "GitHub Pages domain is not authorized"; providers=cfg.get("idpConfig",[]); google=[p for p in providers if p.get("provider")=="google.com"]; print("Google provider entries:", len(google)); assert not google or google[0].get("enabled",True) is not False, "Google provider is disabled"'
-          echo "PASS: GitHub Pages domain is authorized for Firebase Auth."
+          python3 -c 'import json; cfg=json.load(open("/tmp/project.json")); domains=cfg.get("authorizedDomains",[]); print("Authorized domains:", domains); assert "jorgelanchas22-hue.github.io" in domains, "GitHub Pages domain is not authorized"'
+
+          GOOGLE_CODE=$(curl -sS -o /tmp/google-idp.json -w "%{http_code}" -X POST \
+            "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=$API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"requestUri":"https://jorgelanchas22-hue.github.io/retos-ef/","postBody":"id_token=invalid-test-token&providerId=google.com","returnIdpCredential":true,"returnSecureToken":true}')
+          GOOGLE_MSG=$(python3 -c 'import json; d=json.load(open("/tmp/google-idp.json")); print(d.get("error",{}).get("message","OK"))')
+          echo "Google provider probe HTTP: $GOOGLE_CODE"
+          echo "Google provider probe result: $GOOGLE_MSG"
+          if [ "$GOOGLE_MSG" = "OPERATION_NOT_ALLOWED" ] || [ "$GOOGLE_MSG" = "ADMIN_ONLY_OPERATION" ]; then
+            echo "FAIL: Google provider is disabled."
+            exit 1
+          fi
+          echo "PASS: GitHub Pages domain is authorized and Google provider is available."
