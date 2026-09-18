@@ -702,7 +702,9 @@ try{
 
 /* ======================= ESTADO ======================= */
 let alumno = null; // {id, nombre, curso, clase}
-let misRetosData = {}; // { retoId: {estado, comentario, foto, adulto, fecha, validadoProfe} }
+let misRetosData = {}; // retos del banco
+let misRetosPropiosData = {}; // propuestas personales del alumno
+let modalTipoReto = "catalogo";
 let catActiva = "Condición Física";
 let esProfesor = false;
 let todosAlumnosData = {}; // alumnoId -> {nombre,curso,clase,retos:{...}}
@@ -722,7 +724,7 @@ function localKeyAlumno(id){ return 'retosEF_alumno_' + id; }
 
 function guardarLocal(){
   if(!alumno) return;
-  localStorage.setItem(localKeyAlumno(alumno.id), JSON.stringify({info:alumno, retos:misRetosData}));
+  localStorage.setItem(localKeyAlumno(alumno.id), JSON.stringify({info:alumno, retos:misRetosData, propios:misRetosPropiosData}));
   // índice global para el panel local del profesor
   let idx = JSON.parse(localStorage.getItem('retosEF_index')||'{}');
   idx[alumno.id] = alumno;
@@ -735,9 +737,15 @@ function cargarLocal(id){
   return {};
 }
 
+function cargarPropiosLocal(id){
+  const raw = localStorage.getItem(localKeyAlumno(id));
+  if(raw){ const d = JSON.parse(raw); return d.propios || {}; }
+  return {};
+}
+
 function syncFirebase(){
   if(!fbEnabled || !alumno) return Promise.resolve();
-  return db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData})
+  return db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData, propios:misRetosPropiosData})
     .then(()=>{
       document.getElementById('syncBadge').textContent = '● Firebase conectado';
       document.getElementById('syncBadge').style.color = '';
@@ -767,7 +775,7 @@ function cargarTodosLocal(){
     const raw = localStorage.getItem(localKeyAlumno(id));
     if(raw){
       const d = JSON.parse(raw);
-      todosAlumnosData[id] = {info:d.info, retos:d.retos};
+      todosAlumnosData[id] = {info:d.info, retos:d.retos || {}, propios:d.propios || {}};
     }
   });
 }
@@ -874,6 +882,7 @@ function loginAlumno(){
   const id = slug(nombre,curso,clase);
   alumno = {id, nombre, curso, clase};
   misRetosData = cargarLocal(id);
+  misRetosPropiosData = cargarPropiosLocal(id);
   localStorage.setItem('retosEF_sesion', JSON.stringify({nombre, curso, clase}));
 
   function continuar(){
@@ -888,6 +897,7 @@ function loginAlumno(){
       db.ref('retosEF/alumnos/' + id).once('value').then(snap=>{
         const remoto = snap.val();
         if(remoto && remoto.retos) misRetosData = remoto.retos;
+        if(remoto && remoto.propios) misRetosPropiosData = remoto.propios;
         continuar();
       }).catch(err=>{
         console.error('Error leyendo de Firebase:', err);
@@ -996,7 +1006,7 @@ function guardarTrimestreActivoUI(){
 }
 
 function logout(){
-  alumno = null; esProfesor = false; misRetosData = {};
+  alumno = null; esProfesor = false; misRetosData = {}; misRetosPropiosData = {};
   if(fbEnabled && auth && auth.currentUser){ auth.signOut(); }
   localStorage.removeItem('retosEF_sesion');
   document.getElementById('viewAlumno').classList.add('hidden');
@@ -1119,66 +1129,112 @@ function quitarReto(id){
 }
 
 /* ======================= MODAL EVIDENCIA ======================= */
-function abrirModal(retoId){
+
+function esEnlaceDrive(url){
+  if(!url) return true;
+  try{
+    const u = new URL(url);
+    return u.hostname === 'drive.google.com' || u.hostname === 'docs.google.com';
+  }catch(e){ return false; }
+}
+function htmlVideos(videos){
+  videos = videos || {};
+  const items = [['Inicio', videos.inicio],['Progreso', videos.progreso],['Final', videos.final]].filter(x=>x[1]);
+  if(!items.length) return '';
+  return '<div class="video-link-row">' + items.map(x=>'<a target="_blank" rel="noopener" href="'+x[1]+'">▶ '+x[0]+'</a>').join('') + '</div>';
+}
+function abrirModal(retoId, tipo){
   modalRetoId = retoId;
-  const reto = RETOS.find(r=>r.id==retoId);
-  document.getElementById('modalRetoTexto').textContent = 'RETO #' + reto.id + ' · ' + reto.texto;
-  document.getElementById('chkAuto').checked = false;
-  document.getElementById('inComentario').value = '';
-  document.getElementById('inAdulto').value = '';
-  document.getElementById('inFoto').value = '';
-  document.getElementById('previewFoto').classList.add('hidden');
+  modalTipoReto = tipo || 'catalogo';
+  let reto, datos;
+  if(modalTipoReto === 'propio'){
+    reto = misRetosPropiosData[retoId];
+    datos = reto || {};
+    document.getElementById('modalRetoTexto').textContent = 'RETO PROPIO · ' + (reto.titulo || '');
+  }else{
+    reto = RETOS.find(r=>r.id==retoId);
+    datos = misRetosData[retoId] || {};
+    document.getElementById('modalRetoTexto').textContent = 'RETO #' + reto.id + ' · ' + reto.texto;
+  }
+  const v = datos.videos || {};
+  document.getElementById('chkAuto').checked = datos.estado === 'completado';
+  document.getElementById('inComentario').value = datos.comentario || '';
+  document.getElementById('inVideoInicio').value = v.inicio || '';
+  document.getElementById('inVideoProgreso').value = v.progreso || '';
+  document.getElementById('inVideoFinal').value = v.final || '';
   document.getElementById('modalEvidencia').classList.remove('hidden');
 }
 function cerrarModal(){
   document.getElementById('modalEvidencia').classList.add('hidden');
   modalRetoId = null;
+  modalTipoReto = 'catalogo';
 }
-document.getElementById('inFoto').addEventListener('change', function(e){
-  const file = e.target.files[0];
-  if(!file) return;
-  const reader = new FileReader();
-  reader.onload = function(ev){
-    comprimirImagen(ev.target.result, function(compressed){
-      document.getElementById('previewFoto').src = compressed;
-      document.getElementById('previewFoto').classList.remove('hidden');
-      document.getElementById('previewFoto').dataset.data = compressed;
-    });
-  };
-  reader.readAsDataURL(file);
-});
-function comprimirImagen(dataUrl, cb){
-  const img = new Image();
-  img.onload = function(){
-    const maxW = 600;
-    const scale = Math.min(1, maxW/img.width);
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width*scale; canvas.height = img.height*scale;
-    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-    cb(canvas.toDataURL('image/jpeg',0.6));
-  };
-  img.src = dataUrl;
-}
-
 function guardarEvidencia(){
-  if(!document.getElementById('chkAuto').checked){
-    alert('Marca la casilla para confirmar que has completado el reto.');
+  const inicio = document.getElementById('inVideoInicio').value.trim();
+  const progreso = document.getElementById('inVideoProgreso').value.trim();
+  const final = document.getElementById('inVideoFinal').value.trim();
+  const comentario = document.getElementById('inComentario').value.trim();
+  if(![inicio,progreso,final].every(esEnlaceDrive)){
+    alert('Los enlaces de vídeo deben ser enlaces válidos de Google Drive.');
     return;
   }
-  const foto = document.getElementById('previewFoto').dataset.data || null;
-  misRetosData[modalRetoId] = {
-    estado: 'completado',
-    autoevaluacion: true,
-    comentario: document.getElementById('inComentario').value.trim(),
-    adulto: document.getElementById('inAdulto').value.trim(),
-    foto: foto,
-    fecha: new Date().toISOString(),
-    validadoProfe: false
-  };
+  if(!inicio && !progreso && !final && !comentario){
+    alert('Añade al menos un enlace de Drive o un comentario de progreso.');
+    return;
+  }
+  const terminado = document.getElementById('chkAuto').checked;
+  const datos = {estado:terminado?'completado':'elegido',comentario,videos:{inicio,progreso,final},fecha:new Date().toISOString(),validadoProfe:false};
+  if(modalTipoReto === 'propio'){
+    const previo = misRetosPropiosData[modalRetoId] || {};
+    misRetosPropiosData[modalRetoId] = {...previo, ...datos};
+  }else{
+    const previo = misRetosData[modalRetoId] || {};
+    misRetosData[modalRetoId] = {...previo, ...datos};
+  }
   guardarLocal();
   cerrarModal();
-  mostrarToast('Guardando...', 8000);
-  syncFirebase().finally(()=>location.reload());
+  mostrarToast(terminado ? 'Reto enviado para validar.' : 'Progreso guardado.',2500);
+  syncFirebase().finally(()=>renderAlumno());
+}
+
+function abrirModalRetoPropio(){
+  ['rpTitulo','rpObjetivo','rpPorQue','rpPlan'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('rpCategoria').value='Condición Física';
+  document.getElementById('modalRetoPropio').classList.remove('hidden');
+}
+function cerrarModalRetoPropio(){ document.getElementById('modalRetoPropio').classList.add('hidden'); }
+function guardarPropuestaReto(){
+  const titulo=document.getElementById('rpTitulo').value.trim();
+  const objetivo=document.getElementById('rpObjetivo').value.trim();
+  const porQue=document.getElementById('rpPorQue').value.trim();
+  const plan=document.getElementById('rpPlan').value.trim();
+  const categoria=document.getElementById('rpCategoria').value;
+  if(!titulo||!objetivo||!porQue||!plan){ alert('Completa título, objetivo, por qué supone un reto y cómo vas a trabajarlo.'); return; }
+  const id='p_'+Date.now().toString(36);
+  misRetosPropiosData[id]={id,titulo,objetivo,porQue,plan,categoria,trimestre:trimestreActivo,estadoAprobacion:'pendiente',estado:'propuesto',puntos:0,comentarioProfe:'',videos:{},comentario:'',validadoProfe:false,fecha:new Date().toISOString()};
+  guardarLocal();
+  cerrarModalRetoPropio();
+  mostrarToast('Propuesta enviada al profesor.',2500);
+  syncFirebase().finally(()=>renderAlumno());
+}
+function renderRetosPropiosAlumno(){
+  const cont=document.getElementById('misRetosPropios');
+  if(!cont) return;
+  const propios=Object.values(misRetosPropiosData||{}).filter(r=>r.trimestre===trimestreActivo);
+  if(!propios.length){ cont.innerHTML='<p class="small">Todavía no has propuesto ningún reto este trimestre.</p>'; return; }
+  cont.innerHTML='';
+  propios.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(r=>{
+    const div=document.createElement('div'); div.className='proposal-card';
+    let cls='status-pending',txt='Pendiente de aprobación';
+    if(r.estadoAprobacion==='aprobado'){cls='status-approved';txt='Aprobado · '+r.puntos+' pt'+(r.puntos!==1?'s':'');}
+    if(r.estadoAprobacion==='rechazado'){cls='status-rejected';txt='No aprobado';}
+    const est=r.validadoProfe?'<span class="pill pill-completado">Validado</span>':(r.estado==='completado'?'<span class="pill pill-pendiente">Pendiente de validar</span>':'');
+    div.innerHTML='<b>'+r.titulo+'</b><p class="small" style="margin:6px 0;">'+r.objetivo+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlVideos(r.videos);
+    if(r.estadoAprobacion==='aprobado'&&!r.validadoProfe){
+      const btn=document.createElement('button'); btn.className='btn btn-ghost btn-sm'; btn.style.marginTop='8px'; btn.textContent='Registrar progreso'; btn.onclick=()=>abrirModal(r.id,'propio'); div.appendChild(btn);
+    }
+    cont.appendChild(div);
+  });
 }
 
 /* ======================= VISTA PROFESOR ======================= */
