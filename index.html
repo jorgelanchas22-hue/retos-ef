@@ -1857,22 +1857,33 @@ function renderCarpetasProfesor(){
   const cont=document.getElementById('listaCarpetasProfesor');
   if(!cont) return;
   cont.innerHTML='';
-  const ids=alumnosFiltrados().sort((a,b)=>{
-    const aa=todosAlumnosData[a]&&todosAlumnosData[a].info;
-    const bb=todosAlumnosData[b]&&todosAlumnosData[b].info;
-    return ((aa&&aa.nombre)||'').localeCompare((bb&&bb.nombre)||'');
+  const fCurso=document.getElementById('fCurso').value;
+  const fClase=document.getElementById('fClase').value;
+  const alumnos=[];
+  Object.entries(LISTAS_OFICIALES).forEach(([grupo,nombres])=>{
+    const partes=grupo.split('_');
+    const curso=partes[0], clase=partes[1];
+    if(fCurso && curso!==fCurso) return;
+    if(fClase && clase!==fClase) return;
+    nombres.forEach(nombre=>{
+      const alId=slug(nombre,curso,clase);
+      const registrado=todosAlumnosData[alId] || {};
+      alumnos.push({
+        info:{nombre,curso,clase},
+        retos:registrado.retos || {},
+        propios:registrado.propios || {}
+      });
+    });
   });
-  if(!ids.length){ cont.innerHTML='<p class="small">No hay alumnado registrado todavía con estos filtros.</p>'; return; }
-  ids.forEach(alId=>{
-    const a=todosAlumnosData[alId];
-    if(!a||!a.info) return;
+  alumnos.sort((a,b)=>a.info.curso.localeCompare(b.info.curso) || a.info.clase.localeCompare(b.info.clase) || a.info.nombre.localeCompare(b.info.nombre));
+  alumnos.forEach(a=>{
     const key=a.info.curso+'_'+a.info.clase+'|'+a.info.nombre;
     const driveUrl=DRIVE_CARPETAS_ALUMNOS[key]||'';
     const total=Object.keys(a.retos||{}).length+Object.keys(a.propios||{}).length;
     const valid=Object.values(a.retos||{}).filter(x=>x.validadoProfe).length+Object.values(a.propios||{}).filter(x=>x.validadoProfe).length;
     const card=document.createElement('div');
     card.className='proposal-card';
-    card.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><div><b>'+a.info.nombre+'</b><div class="small">'+a.info.curso+' '+a.info.clase+' · '+total+' retos · '+valid+' validados</div></div>'+
+    card.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><div><b>'+a.info.nombre+'</b><div class="small">'+a.info.curso+' '+a.info.clase+' · '+total+' retos registrados · '+valid+' validados</div></div>'+
       (driveUrl?'<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="'+driveUrl+'">📁 Abrir Drive</a>':'<span class="small">Carpeta Drive no localizada</span>')+'</div>'+
       '<details class="help-box" style="margin-top:10px;"><summary>Ver historial en la app</summary>'+historialProfesorHTML(a)+'</details>';
     cont.appendChild(card);
