@@ -176,10 +176,11 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <summary>¿Cómo funciona Retos EF?</summary>
       <div class="guide-step"><b>1. Elige o propón.</b> Puedes escoger un reto del banco de tu curso o proponer uno propio.</div>
       <div class="guide-step"><b>2. Si propones uno propio, lo aprueba el profesor.</b> Hasta que no esté aprobado no puntúa.</div>
-      <div class="guide-step"><b>3. Registra tu progreso.</b> Puedes añadir enlaces de Drive a vídeos cortos de INICIO, PROGRESO y FINAL.</div>
-      <div class="guide-step"><b>4. Los vídeos no se publican en redes.</b> Súbelos a tu Drive, compártelos como lector con <b>jorge.lanchas@triana.salesianos.edu</b> y pega aquí el enlace.</div>
-      <div class="guide-step"><b>5. La app guarda el enlace, no el vídeo.</b> Cuando termines, envía el reto a validar. El profesor revisará la evidencia.</div>
-      <div class="guide-step"><b>6. Cuida la privacidad.</b> Graba solo lo necesario para demostrar el reto y evita que aparezcan otras personas sin necesidad.</div>
+      <div class="guide-step"><b>3. Registra tu progreso.</b> Puedes añadir enlaces de Drive a vídeos cortos de INICIO, PROGRESO y FINAL y, cuando el reto lo permita, un registro de actividad de Strava, Garmin u otra app.</div>
+      <div class="guide-step"><b>4. Strava y otras apps son opcionales.</b> No necesitas crear una cuenta para participar. Si usas una app deportiva, evita compartir públicamente tu domicilio, el inicio/final exactos de una ruta o datos de salud innecesarios.</div>
+      <div class="guide-step"><b>5. Los vídeos no se publican en redes.</b> Súbelos a tu Drive, compártelos como lector con <b>jorge.lanchas@triana.salesianos.edu</b> y pega aquí el enlace.</div>
+      <div class="guide-step"><b>6. La app guarda los enlaces, no los archivos.</b> Cuando termines, envía el reto a validar. El profesor revisará la evidencia.</div>
+      <div class="guide-step"><b>7. Cuida la privacidad.</b> Graba solo lo necesario para demostrar el reto y evita que aparezcan otras personas sin necesidad.</div>
     </details>
 
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Mis retos</h2></div>
@@ -192,6 +193,13 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <p class="small">¿Tienes un objetivo que encaja mejor contigo? Propónlo. El profesor lo revisará y decidirá si se aprueba y cuántos puntos vale.</p>
       <button class="btn btn-lime btn-sm" onclick="abrirModalRetoPropio()">+ Proponer mi reto</button>
       <div id="misRetosPropios" style="margin-top:12px;"></div>
+    </div>
+
+    <div class="card" style="margin-top:20px;">
+      <h3 style="margin:0 0 6px;font-size:16px;">📁 Mi carpeta · Historial</h3>
+      <p class="small">Aquí tienes reunidos todos los retos que has elegido o propuesto durante el curso, con su estado y sus evidencias.</p>
+      <div id="miHistorialResumen" class="small" style="font-weight:700;margin-bottom:10px;"></div>
+      <div id="miHistorial"></div>
     </div>
 
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Elegir retos</h2></div>
@@ -242,6 +250,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         <div class="tab" id="tabEvaluacion" onclick="cambiarTabProfe('evaluacion')">Evaluación</div>
         <div class="tab" id="tabTabla" onclick="cambiarTabProfe('tabla')">Todos los retos</div>
         <div class="tab" id="tabPropios" onclick="cambiarTabProfe('propios')">Retos del alumnado</div>
+        <div class="tab" id="tabCarpetas" onclick="cambiarTabProfe('carpetas')">Carpetas</div>
         <div class="tab" id="tabAlumnado" onclick="cambiarTabProfe('alumnado')">Alumnado</div>
         <div class="tab" id="tabGuia" onclick="cambiarTabProfe('guia')">Cómo funciona</div>
       </div>
@@ -396,14 +405,22 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         </div>
       </div>
 
+      <div id="subCarpetas" class="hidden">
+        <div class="card" style="margin-top:16px;">
+          <h3 style="margin-top:0;font-size:15px;">📁 Carpetas individuales del alumnado</h3>
+          <p class="small">Cada alumno dispone de una carpeta privada dentro de su grupo en tu Drive. Desde aquí puedes abrirla y revisar también su historial de retos registrado en la app.</p>
+          <div id="listaCarpetasProfesor"></div>
+        </div>
+      </div>
+
       <div id="subGuia" class="hidden">
         <div class="card" style="margin-top:16px;">
           <h3 style="margin-top:0;font-size:15px;">Cómo funciona Retos EF</h3>
           <div class="guide-step"><b>Banco por curso y trimestre.</b> 2.º ESO y 4.º ESO tienen retos diferentes y el alumnado solo ve el trimestre activo.</div>
           <div class="guide-step"><b>Reto propio.</b> El alumno puede proponer un reto personal. No puntúa hasta tu aprobación.</div>
           <div class="guide-step"><b>Puntuación.</b> Al aprobar un reto propio asignas 1, 1,5 o 2 puntos.</div>
-          <div class="guide-step"><b>Vídeos de progreso.</b> Cada reto puede llevar enlaces de Drive para Inicio → Progreso → Final. La app almacena únicamente los enlaces.</div>
-          <div class="guide-step"><b>Drive.</b> El alumno sube el vídeo a su Drive y lo comparte como lector contigo. Se ha creado en tu Drive <b>RETOS EF 2026-2027</b>, con 2.º/4.º y grupos A/B/C, para el archivo docente.</div>
+          <div class="guide-step"><b>Vídeos de progreso.</b> Cada reto puede llevar enlaces de Drive para Inicio → Progreso → Final. También puede añadirse un registro de Strava/Garmin/otra app cuando tenga sentido. La app almacena únicamente los enlaces.</div>
+          <div class="guide-step"><b>Drive.</b> El alumno sube el vídeo a su Drive y lo comparte como lector contigo. En tu Drive <b>RETOS EF 2026-2027</b> hay una carpeta individual para cada uno de los 178 alumnos, organizada por curso y grupo.</div>
           <div class="guide-step"><b>Privacidad.</b> Las carpetas generales no se comparten con las clases. Los vídeos no se publican en TikTok ni en otras redes desde esta app.</div>
           <div class="guide-step"><b>Validación.</b> El alumno registra progreso; cuando marca el reto como terminado pasa a “Pendiente de validar”. Tú compruebas la evidencia y lo validas.</div>
           <div style="margin-top:14px;"><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1688Z7AhRuAI7ZjE56qr9GQ9D2ltGiHdH">Abrir carpeta RETOS EF en Drive</a></div>
@@ -484,6 +501,9 @@ Juan López Ruiz
     <input id="inVideoProgreso" type="url" placeholder="https://drive.google.com/...">
     <label>Vídeo · Resultado final</label>
     <input id="inVideoFinal" type="url" placeholder="https://drive.google.com/...">
+    <label>Registro de actividad · opcional</label>
+    <input id="inActividadExterna" type="url" placeholder="Strava, Garmin o enlace de Drive a una captura">
+    <p class="small" style="margin-top:-6px;">También puedes subir a Drive una captura de Google Fit, Apple Fitness u otra app y pegar aquí su enlace. No hace falta usar ninguna plataforma externa.</p>
     <label>Comentario o reflexión breve</label>
     <textarea id="inComentario" rows="2" placeholder="Qué has mejorado, qué te ha costado o qué has cambiado..."></textarea>
     <div class="check-row">
@@ -935,6 +955,188 @@ const LISTAS_OFICIALES = {
   ]
 };
 
+const DRIVE_CARPETAS_ALUMNOS = {
+  "2ESO_A|Vega Tejada, Francisco David": "https://drive.google.com/drive/folders/1TWK8usXeLgP7F0uEuNHRqThwRpslhaxr",
+  "2ESO_A|Tirado Gómez, David": "https://drive.google.com/drive/folders/1RxYkrTPmfzkKoCHblO8s_4hFz1zfoBBC",
+  "2ESO_A|Ruiz Martínez, Adrián": "https://drive.google.com/drive/folders/121SkP5OQbYSpnBvYtpjSRPIWD0KLnLTV",
+  "2ESO_A|Rufián Ramos, Jaime": "https://drive.google.com/drive/folders/1G9Foq3z3OM8G1O5Lpz7j7lCYqK0qdPfV",
+  "2ESO_A|Rueda Vázquez, Andrés": "https://drive.google.com/drive/folders/1XGIo9TVmy8Tad81VJ6KwMiUnk_nSRSXi",
+  "2ESO_A|Rodríguez Berrio, Miguel": "https://drive.google.com/drive/folders/1GXkWXgke6WGXb5ljIHM9EXq5Azkwfs4A",
+  "2ESO_A|Rico Romero, Isabel": "https://drive.google.com/drive/folders/1c4Vb7HrI8IRXLgZnX_u57ZjoSxbAmcRo",
+  "2ESO_A|Reina Vilalta, Estrella": "https://drive.google.com/drive/folders/1TLBWp5LG_y4d1SbKaEeIvSWryaPjlzkB",
+  "2ESO_A|Ramos Reyes, Carlota": "https://drive.google.com/drive/folders/1xh7gF3_WqBYDbj69S-0u6gV8oQb2hGrl",
+  "2ESO_A|Puente Santana, Adrián": "https://drive.google.com/drive/folders/16uSDET_7mSIhDxB9t1SiPKutcFkk8km9",
+  "2ESO_A|Parrilla Caballero, Ariana": "https://drive.google.com/drive/folders/1IoKwNGZnl3kiPqpYIBzysMobnrtBsFTK",
+  "2ESO_A|Martín Fernández, Julia": "https://drive.google.com/drive/folders/18056yWJLX1xK5lRsIEU2nQR5BJAqlc7I",
+  "2ESO_A|Márquez Guerrero, Javier": "https://drive.google.com/drive/folders/1BX34Xfp4BekXGyGc0v8F_Cyc6y7kuJWL",
+  "2ESO_A|Marín Batista, Nicolás": "https://drive.google.com/drive/folders/1a0bhkbKsScUXI2co-d0Jopjgyh314AGP",
+  "2ESO_A|Macías Granados, Rocío": "https://drive.google.com/drive/folders/1gcoFeoZozt6Q9Q1t2J3_Hy-iyxxLUS4r",
+  "2ESO_A|Hijón Moreno, Ángela": "https://drive.google.com/drive/folders/1eDzg2A_GJNXGVZCW2kViTNcDGKROotym",
+  "2ESO_A|Gutiérrez González, Aarón": "https://drive.google.com/drive/folders/1aegA44iGVrHMk9Ts1N0vWeoKD8Cwp0bg",
+  "2ESO_A|Guerrero Vigil, Darío": "https://drive.google.com/drive/folders/1plXtMrqkqfAPXqv9fubYn-DgoVD6j_AR",
+  "2ESO_A|González Correa, Ángel": "https://drive.google.com/drive/folders/1IdVkpgmW46gQFGMFBcI0tCcptAwnUlJY",
+  "2ESO_A|Gil Vidal, Adriana": "https://drive.google.com/drive/folders/132Phop-cCr3FSk-wG3vLDERstN9uKcCL",
+  "2ESO_A|García Casado, Isabel": "https://drive.google.com/drive/folders/1QEWDF_zlKkN_jLUn0xGxy-R2klYz_v-p",
+  "2ESO_A|García Ancela, Lola": "https://drive.google.com/drive/folders/1KwA_tGDN9Aq-XMahpFjDVE2ClSa1U5do",
+  "2ESO_A|Fraile Gutiérrez, Alejandro": "https://drive.google.com/drive/folders/1YZRGWJ5i8LB4Sy93E06xoDGn_hHKhN4J",
+  "2ESO_A|Errazquin Márquez, Lucas": "https://drive.google.com/drive/folders/1Dh5SvwsQV85uHAdfMltFOieQtjjXsZu3",
+  "2ESO_A|Elvira Guerrero, Carlos": "https://drive.google.com/drive/folders/15pNk3h8wSQPtzFWFdK3g_jhCg-gNYpVr",
+  "2ESO_A|De la Fuente Montero, Cayetana": "https://drive.google.com/drive/folders/1-7Yy6zgG0Vnb0BZLnDNd8wD11dX1PaeB",
+  "2ESO_A|Corado Álvarez, Manuel": "https://drive.google.com/drive/folders/1M-RvbkA7VDYTotTCVwuOoMVbH2v1qpll",
+  "2ESO_A|Bermejo Moreno, Guzmán": "https://drive.google.com/drive/folders/1YBI9zVlvpvEr63dxFM2u2w7go-J1B6p3",
+  "2ESO_A|Bejarano Izaguirre, Lucía": "https://drive.google.com/drive/folders/1ADgIjODaewSv34jxuzvi3lJYujBQzfdC",
+  "2ESO_B|Troya Díaz, Alejandro": "https://drive.google.com/drive/folders/1udJFZOOUVB-buoPgKeYfFwsWACsXlI5E",
+  "2ESO_B|Schroeder Terán, Lucas": "https://drive.google.com/drive/folders/1J-ZXezzR8S4RrblysV_jxwycQmmSnvqJ",
+  "2ESO_B|Santos Argullo, Lucía": "https://drive.google.com/drive/folders/1c76B2uorjLyev8c-Gh6liTEGr2TWGG98",
+  "2ESO_B|Sánchez Calvillo, Alejandra": "https://drive.google.com/drive/folders/15dDYItW-frbNZC66MFznGy0PikYti4CD",
+  "2ESO_B|Romero Escobar, Elsa": "https://drive.google.com/drive/folders/1pCcimo2hLcINfaRdJD6U3_ZHEPoyDz4X",
+  "2ESO_B|Resa Gavira, Manuel": "https://drive.google.com/drive/folders/1dxbbbw870jwD3RfU00tCdxyZG2ayD5XW",
+  "2ESO_B|Plaza Cabeza, Pedro": "https://drive.google.com/drive/folders/1G8pZMx-hQlu3_CQsvRPqJqWAGKsFeITa",
+  "2ESO_B|Palomino Dopazo, Gonzalo": "https://drive.google.com/drive/folders/1zap-B92J1Y0K-eMxp2IxjZ4HeILKr_og",
+  "2ESO_B|Morente Herráez, María": "https://drive.google.com/drive/folders/1rEcJLvXGW8yJLrtQdr8RARDPeJU08s6h",
+  "2ESO_B|Mariños Poma, Martín Di Stéfano": "https://drive.google.com/drive/folders/1TAIQ3FF6zWnXq6mV4_M1ZSAwCm92-toZ",
+  "2ESO_B|Jiménez Ventura, Ainhoa": "https://drive.google.com/drive/folders/1pz_4xl0BkYwhGISIPtk5cFYZLSXrMFZt",
+  "2ESO_B|Herrera González de Zárate, José Pablo": "https://drive.google.com/drive/folders/1hSrxbk3Lpqco-OsTKYPu5UYLWGANSRiR",
+  "2ESO_B|González Gómez, Victoria": "https://drive.google.com/drive/folders/1-efJdRE2oa9TUaf4KPL3HqckxjwsMNwu",
+  "2ESO_B|Gómez Simón, Juan": "https://drive.google.com/drive/folders/1nup4MHmLtcjypHxjo_XyZSOhq-b9Avc_",
+  "2ESO_B|García de Castro Diáñez, Paula": "https://drive.google.com/drive/folders/19P6GdxzGnKoCd9l0YSWGTFzNhEqRTF9p",
+  "2ESO_B|García Fernández, Manuel Jesús": "https://drive.google.com/drive/folders/1hDIjmnZ8zk2TFbdz3qv9ltTPtmBaPiFM",
+  "2ESO_B|Franco Rodríguez, Juan": "https://drive.google.com/drive/folders/1HN_lSqnJuEx7y_9Um5kzqNwdqCc-k2XE",
+  "2ESO_B|Delgado Jurado, Amelia": "https://drive.google.com/drive/folders/1JLpU_6WvZ-yj_bjOKHApPCp7KHL3Wojw",
+  "2ESO_B|De Alba Machado, Candela": "https://drive.google.com/drive/folders/14mpuqLkCXBJlVkSo2BIzj_1AGwqn4E76",
+  "2ESO_B|Chávez Ramírez, Valeria Ainara": "https://drive.google.com/drive/folders/1Zxi_ovcSzy9LWJudLRLiHBFAF_WmnEfQ",
+  "2ESO_B|Cerro Quintero, José": "https://drive.google.com/drive/folders/1kzl9_KYIlMw0PQnbJA7BuiEgR9BXA4QW",
+  "2ESO_B|Castañeda Manayay, Ainhoa Brigitte": "https://drive.google.com/drive/folders/18dBscL66WwLDcGoKT0-SvA8H7-fVvmEC",
+  "2ESO_B|Capitán Mateos, Lucas": "https://drive.google.com/drive/folders/1CPiGyynJMD8kCHyFAAz7S7z2J_nkUQfJ",
+  "2ESO_B|Camacho Delgado, Valentín": "https://drive.google.com/drive/folders/1c5OL-5yl9aHsVTlX8QY_F0eI255Zg_1R",
+  "2ESO_B|Calderón Pulido, Diego": "https://drive.google.com/drive/folders/1WDF8gQzmMJX1mnYypJBaj8I0WmImX8cu",
+  "2ESO_B|Braojos Romero, Álvaro": "https://drive.google.com/drive/folders/1DhYTyXPjxOPxOC5GSRgsVEvs6I4m-OxU",
+  "2ESO_B|Bolívar Amador, Valeria Arantxa": "https://drive.google.com/drive/folders/1XbEtRzjg2S5-1ogzmQZNR6jNPoNrRvhe",
+  "2ESO_B|Barroso Gallego, Pablo": "https://drive.google.com/drive/folders/1kRk02cJxFimPgGq5V-VMqSC9xG6asSss",
+  "2ESO_B|Barat Caballero, Carlos": "https://drive.google.com/drive/folders/1ZAtsixussfuN5CGj6myov-9HmytJ3mEw",
+  "2ESO_C|Wandelmer Salado, José": "https://drive.google.com/drive/folders/1erjTid1gd1y8CGPyKkTuAV2EFbLzp_tW",
+  "2ESO_C|Somoza Aldana, Jesús": "https://drive.google.com/drive/folders/1mSHvVHriYP7vlFYQjlyXK6NfC_rlTnH7",
+  "2ESO_C|Segura Iglesia, Lucía": "https://drive.google.com/drive/folders/1YvlTk2BDT1Cs8mzOfwOtXFHzFP_dMmMG",
+  "2ESO_C|Sánchez Pérez Castilla, Ana": "https://drive.google.com/drive/folders/1CtnK2loBw-GCh1XDvgm3darZl9fysl94",
+  "2ESO_C|Ramírez Vega, Paula": "https://drive.google.com/drive/folders/1O9-6fN0Esp0D2I6Rrc0AbXqE0pH5lbSa",
+  "2ESO_C|Nuño Contreras, Noa": "https://drive.google.com/drive/folders/13LszfjvOAVZ_4hWfUSnHr43UpTp4R8SF",
+  "2ESO_C|Murillo Navarro, Lucía": "https://drive.google.com/drive/folders/1-jj6PHSAcclE-qRGL5iG9ZHl7ycnPClf",
+  "2ESO_C|Morato Gómez, Alejandro": "https://drive.google.com/drive/folders/1r1ihQW197fAFblg_k79NgypHe3Ln3AYF",
+  "2ESO_C|Molinero García, Sergio": "https://drive.google.com/drive/folders/1DXy8KR1hKfQ4oRnECWqu-atY_AWO1WqS",
+  "2ESO_C|Modroño Fernández, Ana": "https://drive.google.com/drive/folders/1jmY24qMKVfSdmzhBt6Y8MHvUZXpg4F2E",
+  "2ESO_C|Mateo Arispón, Ainhoa": "https://drive.google.com/drive/folders/1WZxrt2_dwiYOgkYRPJCDNPlaPtBOBcGx",
+  "2ESO_C|Marín Batista, Miguel": "https://drive.google.com/drive/folders/1YdkPYDx0zmNmTS1WlmfUbf4NKM0jc7xN",
+  "2ESO_C|Magro Colume, Ainhoa": "https://drive.google.com/drive/folders/1neiEOa7w_21x1_DXKCg3DIt0LnFYbBa7",
+  "2ESO_C|Machuca Sánchez, Álvaro": "https://drive.google.com/drive/folders/1n8xZsiFECrN6bnB46GWCU6l4K8z7K0_E",
+  "2ESO_C|López González, Abril": "https://drive.google.com/drive/folders/1UfcNb-sPhpr0M8z15p3mj1NOC_bdDwxt",
+  "2ESO_C|López Fernández, Francisco": "https://drive.google.com/drive/folders/1zwbjZdePhBPLFd6RCJB_1g1-pvoDC-wV",
+  "2ESO_C|Jurado Gómez, Nicolás": "https://drive.google.com/drive/folders/1gajd1tU0n7nNokuGk8UEq5mEguphx7C9",
+  "2ESO_C|Jiménez Garzón, Lucas": "https://drive.google.com/drive/folders/1mTwUV-M1s-W1tF7Qbx5sPhwUDunRNdEy",
+  "2ESO_C|Iglesias Ruiz, Diego": "https://drive.google.com/drive/folders/1BMcebrV-YTroWb5XUXZIFPP9G_OA_QBJ",
+  "2ESO_C|Hijón Sánchez, José Ignacio": "https://drive.google.com/drive/folders/1jMyHtpkv6IsbHU7jxYpGytMU2ad4EOON",
+  "2ESO_C|Gómez Sánchez, Juan": "https://drive.google.com/drive/folders/1_tMaoLgMy03-RP7TaFCfhn_z2k-DoM4X",
+  "2ESO_C|Gamito Fernández, Iván": "https://drive.google.com/drive/folders/1aRcni7U15O3jGLArQwUQME36EQVE6NEh",
+  "2ESO_C|Gamboa Osorio, Anagabriella": "https://drive.google.com/drive/folders/1OSa1kPZEI0TT41nam0wyoM95YvGkIqM2",
+  "2ESO_C|De los Santos Ruiz, Ana": "https://drive.google.com/drive/folders/12HyJu5Qu3hP9un-iwPBl6xdDY2NhmFdd",
+  "2ESO_C|Casado De la Rosa, Daniela": "https://drive.google.com/drive/folders/1EcqD4jDFnK08a0CzM5XaSYczw_NmeSEL",
+  "2ESO_C|Brenes Alanís, Pedro Jesús": "https://drive.google.com/drive/folders/1soc4P0HHkZ9__MUWyjpGLzZppUl5M7EL",
+  "2ESO_C|Borrego Martín, Juan": "https://drive.google.com/drive/folders/12FuE9godckDeWSKYzoYiysMAzwI9HvEe",
+  "2ESO_C|Barrera Villajos, Ángela": "https://drive.google.com/drive/folders/1ZGWrub8ykYn4yzWUHbBVlQjDTnF17vSs",
+  "2ESO_C|Allende Pérez, Javier": "https://drive.google.com/drive/folders/1etB9D1w5LIVnVF_uZVM7YRo81nyhQT6i",
+  "2ESO_C|Algaba Ortiz, Ángela de la Cruz": "https://drive.google.com/drive/folders/1C7Txt97V8y1siVsLrBXg1dHdGPsaOO3r",
+  "4ESO_A|Segura Molina, Manuel": "https://drive.google.com/drive/folders/1eLqzMAam3R8yiTjxA2zGMcwlrCf1GO5G",
+  "4ESO_A|Sastre Vela, Manuel": "https://drive.google.com/drive/folders/1SGYmioyigjZO5hDmLwkEOaZHefmsdg_t",
+  "4ESO_A|Sánchez Pérez, Francisco Manuel": "https://drive.google.com/drive/folders/1dhZJLaMwvxvYznCOyIKk9jZ1l8v8oh2x",
+  "4ESO_A|Ruiz Prieto, Emilio": "https://drive.google.com/drive/folders/1XU7OHgO_AVjf9Pcd6KO7ga_Ls86eqb69",
+  "4ESO_A|Rubio Frauca, Rafael": "https://drive.google.com/drive/folders/1cb9jHB22ZON9jpS1wDoDobgMf_iDN4gZ",
+  "4ESO_A|Rubio Frauca, Ana": "https://drive.google.com/drive/folders/1apNc2rUu49jUO3upGJzP-SdM87Bhe8hc",
+  "4ESO_A|Rojas Párraga, Jeyko": "https://drive.google.com/drive/folders/1Qop8ezOX8tO2dl2kUWFXu1LM8i0pOHp9",
+  "4ESO_A|Rodríguez Mora, Álvaro": "https://drive.google.com/drive/folders/1bTGqnc5lzEmYMy0d3u9jSHl2WrYYW9Do",
+  "4ESO_A|Ríos Solís, Lucía": "https://drive.google.com/drive/folders/16KKfu5ux9BkbqCOWzMRNI3Dvj9gKEtcy",
+  "4ESO_A|Ricca Tous, Luis": "https://drive.google.com/drive/folders/1935NYsT8g-b-Dgb9uLjVGl_0b3nSg7UV",
+  "4ESO_A|Pulido Leñador, Carlos": "https://drive.google.com/drive/folders/1k2anpKea-o1E-4z57Q6p2_uy-de6-I7S",
+  "4ESO_A|Paredes Chacón, Juan Luis": "https://drive.google.com/drive/folders/1no81AI_Ft_Y877eRgwunQewCix2-8cmh",
+  "4ESO_A|Menéndez Bermeo, Franchesca": "https://drive.google.com/drive/folders/1zsB9_cxRwq3x-eKWfSPdZFOXuB8f04l_",
+  "4ESO_A|Martín Valle, Javier": "https://drive.google.com/drive/folders/10Gk5D-8_FyS5BFJBoKRVgWcMK7Rogu8f",
+  "4ESO_A|Luque Peña, Ernesto": "https://drive.google.com/drive/folders/1V7wN6rHqor1qQnfKk5j-QtRf90UlDXtz",
+  "4ESO_A|Iglesias López, Pablo Reyes": "https://drive.google.com/drive/folders/1Gya3Cqlv244qF_zTJO89KprXAStlOUUA",
+  "4ESO_A|Hernández Campos, Marina": "https://drive.google.com/drive/folders/1kzjuatxmEdMvadoFyBLUFhmGBRRDkPnC",
+  "4ESO_A|Fernández de Moya Vallana, Clara de Asís": "https://drive.google.com/drive/folders/1l80XdcSdmzc4L54K2cqTPKxqZte8qAua",
+  "4ESO_A|Estrella Eliot, Melanie Ximena": "https://drive.google.com/drive/folders/1AK_VI-ponmPEUE0U3r8xhyGJcfE6N1fK",
+  "4ESO_A|Estévez Ramos, Manuel": "https://drive.google.com/drive/folders/1i7oQbv-q7dbJ-A5Wx4-nQpNCcis5cd2e",
+  "4ESO_A|Dorantes González, Rodrigo": "https://drive.google.com/drive/folders/1ZfWJ8oPWzwLyKVQO38OHVNf2Bu25byz6",
+  "4ESO_A|Cid Quidiello, Alejandro": "https://drive.google.com/drive/folders/15chtEisbow4HBkKbFJJzFJSkpMJEa-7J",
+  "4ESO_A|Cernadas Fernández, Sergio": "https://drive.google.com/drive/folders/1RtOjoBSp9Hy27msXs1h1NiD63SRrnoT3",
+  "4ESO_A|Aranda Galbis, Carlos": "https://drive.google.com/drive/folders/1-HVKF6rmUm5xoUdpbWW6ZPy_hqftQlxN",
+  "4ESO_A|Alcántara Cruz, Candela": "https://drive.google.com/drive/folders/14ckMYnbFxQddh3ZBJRm6TQwrjLvPCHxw",
+  "4ESO_B|Valencia Martínez, Marta": "https://drive.google.com/drive/folders/1yPAjQE5IOfXZyD2Jsw41z7pYqLfX7mlW",
+  "4ESO_B|Torilo Cordón, Víctor": "https://drive.google.com/drive/folders/1Oh1y74A8ojYYK5Khu0fg5uYz7afWO_zx",
+  "4ESO_B|Saavedra Plaza, Lucía": "https://drive.google.com/drive/folders/1POZKxV19Tc1FdJY2kuOE-mfEzo7lGiTn",
+  "4ESO_B|Ruiz Vargas, Mario": "https://drive.google.com/drive/folders/11_ftOsJ_sGon6QfyDJ3PerGuRTbWarBp",
+  "4ESO_B|Román Cruz, Ángela": "https://drive.google.com/drive/folders/1eQd6ke9R4XNn_Aj3WA5P_GmB7rA0mpkD",
+  "4ESO_B|Piruat Muñoz, Cristina": "https://drive.google.com/drive/folders/1NiUHI3gnaqEu66EYjJn3IfjTcPDptqvv",
+  "4ESO_B|Peregrín Colmena, Paula": "https://drive.google.com/drive/folders/1SnMFnKAJuJfkReBVefQqszYoqjBZqWKb",
+  "4ESO_B|Oliva González, Julio": "https://drive.google.com/drive/folders/1SJG3FzZzxX1GT0uGyu_Degmb9o8TsNOM",
+  "4ESO_B|Ojeda Romero, Lola": "https://drive.google.com/drive/folders/1jHCcrBAujNnM4ip348ABMwmyv50YUdTl",
+  "4ESO_B|Núñez Gil, Javier": "https://drive.google.com/drive/folders/1kooPNw2je92_FM0pnffUVVfjf5bRPgfs",
+  "4ESO_B|Molina Pedrós, Marta": "https://drive.google.com/drive/folders/1mbLOu_wB6JWJWzab0o0hWycjKQVqBYsX",
+  "4ESO_B|Martín Gómez, Juan": "https://drive.google.com/drive/folders/1Wp1m5ULfW2eS2qGVP9cneU_FEGPJZo5Q",
+  "4ESO_B|Machuca Ramos, Ángela": "https://drive.google.com/drive/folders/1QReFAv5gFgzXg9-v4H06h-z-Uptplkgn",
+  "4ESO_B|Luza Hidalgo, Martina": "https://drive.google.com/drive/folders/1VE7BwXbTDbe7z-m_qkJ9aqbN0bv5FTB9",
+  "4ESO_B|López Guzmán, Paola Alejandra": "https://drive.google.com/drive/folders/1tPfAh8PEtIOu_GrlBTP550lQ70jTjIiq",
+  "4ESO_B|Limón Gómez, Laura": "https://drive.google.com/drive/folders/1zOI-p_JES1cx59trk3Z4JA8YO0cbNQEE",
+  "4ESO_B|León García, Mercedes": "https://drive.google.com/drive/folders/1lq31wGGMAt1WRPTktbmjOIzreT4l9pxc",
+  "4ESO_B|Lamet Correa, Candela": "https://drive.google.com/drive/folders/1lJVzJnm2PRP-AnLmG5BtmDRpswC4DozH",
+  "4ESO_B|Jiménez Vázquez, Manuel": "https://drive.google.com/drive/folders/1eHsSjg9KIokOA3cy6pUW9xPh25ajFvO0",
+  "4ESO_B|Gutiérrez Ortega, Telma Carolina": "https://drive.google.com/drive/folders/1LbXhpzoUeS35uc0CISLM37SLAkfLBrEw",
+  "4ESO_B|Gaviño Ramírez, Pablo": "https://drive.google.com/drive/folders/15f4doaj67DMd1tvqMFp-tr0bA7RE6WOK",
+  "4ESO_B|García Polonsky, Julia": "https://drive.google.com/drive/folders/1C5BCx51FzGLh2JTdAJXobWyEf3IhACxe",
+  "4ESO_B|García Guerra, Sandra": "https://drive.google.com/drive/folders/1rLFFu84vKb-3yDjbctngG42BoGcWPgiN",
+  "4ESO_B|Gallardo Sempere, Inés": "https://drive.google.com/drive/folders/1FVCFwEsPaHS0tmIjAVuJD9uCMRAJHBIP",
+  "4ESO_B|Espino Aragón, Samuel": "https://drive.google.com/drive/folders/1X8zTDndyWXq_odAE5OH0db9oqc8skWBm",
+  "4ESO_B|Díaz Iglesias, Carlota": "https://drive.google.com/drive/folders/1SNxBGEej-_gvSKIIM-OnS9kj8Rs8gU4D",
+  "4ESO_B|Delgado De la Vega, Juan Manuel": "https://drive.google.com/drive/folders/1pTWEjQS8EehkZgJzsjEhfI8o-EWS20pZ",
+  "4ESO_B|Delgado De la Vega, Carmen": "https://drive.google.com/drive/folders/1BfoUBql2VSzsUSTLOv4nY8L8LefaQvQS",
+  "4ESO_B|De Alba Machado, Sara": "https://drive.google.com/drive/folders/1kReJJy1Ch5J1lkRu0w1oH3JcvErSwhv6",
+  "4ESO_B|Castro Palacios, Daniel": "https://drive.google.com/drive/folders/1SEavZ5oAw4w9M6IPmE0KAXN6aQSb1aET",
+  "4ESO_B|Campos García, Olivia": "https://drive.google.com/drive/folders/1yywcI2iXXh_NvDdpxzpXgNvmDcgPbLe8",
+  "4ESO_B|Barroso Sánchez, Triana": "https://drive.google.com/drive/folders/1lhWfuvgVewtFyTf6ajziZhqHnmlSNuAB",
+  "4ESO_B|Álvarez Paisano, José Antonio": "https://drive.google.com/drive/folders/1D-MEzSflQXVK6pvXzOpdJLduCDqRw-Kf",
+  "4ESO_C|Wandelmer Salado, María Luisa": "https://drive.google.com/drive/folders/1J_yUgcBhN5okLqs4HkiOhqmKlY7Bnh79",
+  "4ESO_C|Vilalta Gómez, Guillermo": "https://drive.google.com/drive/folders/1uKefP7PyWUhIfaW-0t8kgSrIC-QGsHkl",
+  "4ESO_C|Ramos Guerra, Pablo": "https://drive.google.com/drive/folders/1UWwcySXvHy8_oSY_-TVwRyr-RyQ7zWh7",
+  "4ESO_C|Vázquez Méndez, Ángel Luis": "https://drive.google.com/drive/folders/1WbxE3CShqXeyl1Flxis-g-SIOKStwIMs",
+  "4ESO_C|Vargas Barrientos, Manuel": "https://drive.google.com/drive/folders/12yhatOUQyiKWgS5y8QW02WhOay8WiKWf",
+  "4ESO_C|Torres Estrémé, Chloé": "https://drive.google.com/drive/folders/1Z-SwP89THstePLDIMxZyCVfs5Rij1j-o",
+  "4ESO_C|Soriano Pedreira, Álvaro": "https://drive.google.com/drive/folders/1fq5eAkM1b-eVRYUf8qHpeDcNefF1DRb9",
+  "4ESO_C|Sevilla Amores, Carmen": "https://drive.google.com/drive/folders/1vtZgQusVb2cUeMP8AH9ZxNfMiITqeZOw",
+  "4ESO_C|Romero Gallú, Lucía": "https://drive.google.com/drive/folders/11AkIZc9QSa34PgzGzzNLv35uMxRFfrhb",
+  "4ESO_C|Rodríguez Villaseñor, Marta": "https://drive.google.com/drive/folders/19P1_n0t3EwyjjJEaPvtQmnuJ_G2T9Hi4",
+  "4ESO_C|Rodríguez López, Álvaro": "https://drive.google.com/drive/folders/10tRHQvaTbiiPbbYdSOr-Ib_GuBLXrhdg",
+  "4ESO_C|Piña González, Francisco Javier": "https://drive.google.com/drive/folders/1--95wuVFbS1yWshAOF0c8mEEjSD6K8qH",
+  "4ESO_C|Pérez Ortiz, Olivia": "https://drive.google.com/drive/folders/1lCe9Pyn4X_Vpc3cGEkHTEc6hP7yoHwAx",
+  "4ESO_C|Peralvo De la Rosa, Nerea": "https://drive.google.com/drive/folders/1Qwd6D495zql3awthzHwAZk-2uIH3p_8R",
+  "4ESO_C|Palomino Dopazo, Carlos": "https://drive.google.com/drive/folders/1irupbUoI9knJZTmyJB7AQiQ931Q0nhN7",
+  "4ESO_C|Palacios Fernández-Sambruno, Esteban": "https://drive.google.com/drive/folders/1OEGI5bZzUue8oQljpekGMvptHZnf7Kle",
+  "4ESO_C|Muñoz Martín, Pedro": "https://drive.google.com/drive/folders/1F9aOWO_crKVngyUO25LBlpUdHvOKzULV",
+  "4ESO_C|Moreno Santiago, Luis": "https://drive.google.com/drive/folders/1pHTr1fthRLW3w-I7m4lFbvcKybbI4Gp3",
+  "4ESO_C|Mengual Saborido, Antonio José": "https://drive.google.com/drive/folders/1OfowifEGy-kXDMoKFyIqSOp0HN6anFMh",
+  "4ESO_C|Medina Villén, Inmaculada": "https://drive.google.com/drive/folders/1CmrcegI2jqRDPApVoIf7U0OfwWKMhMDa",
+  "4ESO_C|Matas Puntas, Javier": "https://drive.google.com/drive/folders/1muPxrTbpcXFPMlwrVYytj2wtcK-ftfGK",
+  "4ESO_C|Martínez Fernández, Noelia": "https://drive.google.com/drive/folders/1i37JaA1BvCbBBEw2CJxy2GEKvcx32HMr",
+  "4ESO_C|Márquez Barbacid, Sara": "https://drive.google.com/drive/folders/1g6Y8Baf1nSmAHAJM15zF2OfOwuXlLW3u",
+  "4ESO_C|López Morato, Ana": "https://drive.google.com/drive/folders/1qubhCfuDeRW6k9-q3pH6skfeOaxQ6mgD",
+  "4ESO_C|López Giménez de Aragón, Francisco": "https://drive.google.com/drive/folders/1dK-AyLBUP8gEqKKIqaPDTXJy7UIiK2eZ",
+  "4ESO_C|León Carmona, Agustín": "https://drive.google.com/drive/folders/17-iBU17abNNkqRGXTL2d3ZIpdOL14JVS",
+  "4ESO_C|Herrera León, Ana": "https://drive.google.com/drive/folders/1qt1Cg3Vp1wpmNNIX51PZDdOzTzK016ZX",
+  "4ESO_C|Guerra García, Manuel": "https://drive.google.com/drive/folders/14_TZA4dwce0epUjVkskk7H5FTv1Hjc6c",
+  "4ESO_C|Gallego Caballero, Amelia": "https://drive.google.com/drive/folders/12fJYXsvej3JBE3Z4isft22669a8bpWd5",
+  "4ESO_C|Fernández Ocaña, Fernando": "https://drive.google.com/drive/folders/1unt5nFe-P4oM6KGB1xDCyPlsPpNMtjns",
+  "4ESO_C|Del Val Cordero, Esperanza": "https://drive.google.com/drive/folders/1UJESj6V7nr08i7enPjL7zM1baKEUWAC_",
+  "4ESO_C|Arenas Bellido, Gonzalo": "https://drive.google.com/drive/folders/1-a22z2KHDRrS8uxIsi_DzcgQBDb33lYk"
+};
+
+
 
 function uid(){
   return 'a_' + Math.random().toString(36).slice(2,10);
@@ -1292,7 +1494,7 @@ function renderAlumno(){
     let pillTxt = est==='validado' ? 'Validado' : (est==='completado' ? 'Pendiente de validar' : 'En progreso');
     div.innerHTML = `<div class="num">RETO #${reto.id} · ${reto.cat} · ${reto.puntos} pt${reto.puntos!==1?'s':''}</div>
       <p>${reto.texto}</p>
-      <span class="pill ${pillClass}">${pillTxt}</span>\n      ${htmlVideos((misRetosData[id]||{}).videos)}`;
+      <span class="pill ${pillClass}">${pillTxt}</span>\n      ${htmlVideos((misRetosData[id]||{}).videos)}\n      ${htmlActividad(misRetosData[id]||{})}`;
     if(est!=='validado'){
       const btn = document.createElement('button');
       btn.className='btn btn-lime btn-sm';
@@ -1312,6 +1514,7 @@ function renderAlumno(){
   });
 
   renderRetosPropiosAlumno();
+  renderHistorialAlumno();
 
   // Lista para elegir (solo del trimestre activo)
   renderTabs();
@@ -1331,6 +1534,44 @@ function renderAlumno(){
       btn.onclick=()=>elegirReto(reto.id);
       div.appendChild(btn);
     }
+    cont.appendChild(div);
+  });
+}
+
+function estadoTextoDatos(d){
+  if(d && d.validadoProfe) return 'Validado';
+  if(d && d.estado==='completado') return 'Pendiente de validar';
+  if(d && d.estado==='elegido') return 'En progreso';
+  return 'Propuesto';
+}
+function renderHistorialAlumno(){
+  const cont=document.getElementById('miHistorial');
+  const resumen=document.getElementById('miHistorialResumen');
+  if(!cont || !alumno) return;
+  const items=[];
+  Object.keys(misRetosData||{}).forEach(id=>{
+    const r=RETOS.find(x=>x.id==id);
+    if(!r) return;
+    items.push({tipo:'Banco',titulo:'Reto #'+r.id,texto:r.texto,trimestre:r.trimestre,puntos:r.puntos,datos:misRetosData[id]});
+  });
+  Object.values(misRetosPropiosData||{}).forEach(r=>{
+    items.push({tipo:'Personal',titulo:r.titulo,texto:r.objetivo,trimestre:r.trimestre,puntos:r.puntos||0,datos:r});
+  });
+  items.sort((a,b)=>a.trimestre-b.trimestre || a.titulo.localeCompare(b.titulo));
+  const validados=items.filter(x=>x.datos.validadoProfe).length;
+  const pendientes=items.filter(x=>x.datos.estado==='completado'&&!x.datos.validadoProfe).length;
+  if(resumen) resumen.textContent=items.length+' retos en tu carpeta · '+validados+' validados · '+pendientes+' pendientes de validar';
+  if(!items.length){ cont.innerHTML='<p class="small">Tu carpeta está vacía todavía.</p>'; return; }
+  cont.innerHTML='';
+  items.forEach(it=>{
+    const d=it.datos||{};
+    const div=document.createElement('div');
+    div.className='proposal-card';
+    div.innerHTML='<div class="num">'+it.tipo+' · '+it.trimestre+'.º trimestre'+(it.puntos?' · '+it.puntos+' pts':'')+'</div>'+
+      '<b>'+it.titulo+'</b><p class="small" style="margin:6px 0;">'+it.texto+'</p>'+
+      '<span class="pill '+(d.validadoProfe?'pill-completado':(d.estado==='completado'?'pill-pendiente':'pill-elegido'))+'">'+estadoTextoDatos(d)+'</span>'+
+      (d.comentario?'<p class="small"><b>Reflexión:</b> '+d.comentario+'</p>':'')+
+      htmlVideos(d.videos)+htmlActividad(d);
     cont.appendChild(div);
   });
 }
@@ -1373,6 +1614,30 @@ function htmlVideos(videos){
   if(!items.length) return '';
   return '<div class="video-link-row">' + items.map(x=>'<a target="_blank" rel="noopener" href="'+x[1]+'">▶ '+x[0]+'</a>').join('') + '</div>';
 }
+function esEnlaceActividad(url){
+  if(!url) return true;
+  try{
+    const u=new URL(url);
+    if(u.protocol!=='https:') return false;
+    const h=u.hostname.toLowerCase();
+    return h==='drive.google.com' || h==='docs.google.com' ||
+      h==='strava.com' || h.endsWith('.strava.com') ||
+      h==='connect.garmin.com' || h.endsWith('.garmin.com') ||
+      h==='adidasrunning.com' || h.endsWith('.adidasrunning.com');
+  }catch(e){ return false; }
+}
+function htmlActividad(d){
+  const url=(d||{}).actividadUrl;
+  if(!url) return '';
+  let etiqueta='Registro de actividad';
+  try{
+    const h=new URL(url).hostname.toLowerCase();
+    if(h.includes('strava')) etiqueta='Strava';
+    else if(h.includes('garmin')) etiqueta='Garmin';
+    else if(h.includes('drive')||h.includes('docs.google')) etiqueta='Captura / registro';
+  }catch(e){}
+  return '<div class="video-link-row"><a target="_blank" rel="noopener" href="'+url+'">📍 '+etiqueta+'</a></div>';
+}
 function abrirModal(retoId, tipo){
   modalRetoId = retoId;
   modalTipoReto = tipo || 'catalogo';
@@ -1392,6 +1657,7 @@ function abrirModal(retoId, tipo){
   document.getElementById('inVideoInicio').value = v.inicio || '';
   document.getElementById('inVideoProgreso').value = v.progreso || '';
   document.getElementById('inVideoFinal').value = v.final || '';
+  document.getElementById('inActividadExterna').value = datos.actividadUrl || '';
   document.getElementById('modalEvidencia').classList.remove('hidden');
 }
 function cerrarModal(){
@@ -1403,17 +1669,22 @@ function guardarEvidencia(){
   const inicio = document.getElementById('inVideoInicio').value.trim();
   const progreso = document.getElementById('inVideoProgreso').value.trim();
   const final = document.getElementById('inVideoFinal').value.trim();
+  const actividadUrl = document.getElementById('inActividadExterna').value.trim();
   const comentario = document.getElementById('inComentario').value.trim();
   if(![inicio,progreso,final].every(esEnlaceDrive)){
     alert('Los enlaces de vídeo deben ser enlaces válidos de Google Drive.');
     return;
   }
-  if(!inicio && !progreso && !final && !comentario){
-    alert('Añade al menos un enlace de Drive o un comentario de progreso.');
+  if(!esEnlaceActividad(actividadUrl)){
+    alert('El registro de actividad debe ser un enlace válido de Strava, Garmin, Adidas Running o Google Drive.');
+    return;
+  }
+  if(!inicio && !progreso && !final && !actividadUrl && !comentario){
+    alert('Añade al menos una evidencia o un comentario de progreso.');
     return;
   }
   const terminado = document.getElementById('chkAuto').checked;
-  const datos = {estado:terminado?'completado':'elegido',comentario,videos:{inicio,progreso,final},fecha:new Date().toISOString(),validadoProfe:false};
+  const datos = {estado:terminado?'completado':'elegido',comentario,videos:{inicio,progreso,final},actividadUrl,fecha:new Date().toISOString(),validadoProfe:false};
   if(modalTipoReto === 'propio'){
     const previo = misRetosPropiosData[modalRetoId] || {};
     misRetosPropiosData[modalRetoId] = {...previo, ...datos};
@@ -1459,7 +1730,7 @@ function renderRetosPropiosAlumno(){
     if(r.estadoAprobacion==='aprobado'){cls='status-approved';txt='Aprobado · '+r.puntos+' pt'+(r.puntos!==1?'s':'');}
     if(r.estadoAprobacion==='rechazado'){cls='status-rejected';txt='No aprobado';}
     const est=r.validadoProfe?'<span class="pill pill-completado">Validado</span>':(r.estado==='completado'?'<span class="pill pill-pendiente">Pendiente de validar</span>':'');
-    div.innerHTML='<b>'+r.titulo+'</b><p class="small" style="margin:6px 0;">'+r.objetivo+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlVideos(r.videos);
+    div.innerHTML='<b>'+r.titulo+'</b><p class="small" style="margin:6px 0;">'+r.objetivo+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlVideos(r.videos)+htmlActividad(r);
     if(r.estadoAprobacion==='aprobado'&&!r.validadoProfe){
       const btn=document.createElement('button'); btn.className='btn btn-ghost btn-sm'; btn.style.marginTop='8px'; btn.textContent='Registrar progreso'; btn.onclick=()=>abrirModal(r.id,'propio'); div.appendChild(btn);
     }
@@ -1469,12 +1740,13 @@ function renderRetosPropiosAlumno(){
 
 /* ======================= VISTA PROFESOR ======================= */
 function cambiarTabProfe(tab){
-  ['resumen','registro','evaluacion','tabla','propios','alumnado','guia'].forEach(t=>{
+  ['resumen','registro','evaluacion','tabla','propios','carpetas','alumnado','guia'].forEach(t=>{
     document.getElementById('sub'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('hidden', t!==tab);
     document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).classList.toggle('active', t===tab);
   });
   if(tab==='alumnado') cargarTextareaLista();
   if(tab==='propios') renderRetosPropiosProfesor();
+  if(tab==='carpetas') renderCarpetasProfesor();
 }
 
 function alumnosFiltrados(){
@@ -1507,6 +1779,7 @@ function renderProfesor(){
   renderEvaluacion();
   renderTablaRetos();
   renderRetosPropiosProfesor();
+  renderCarpetasProfesor();
 }
 
 
@@ -1564,6 +1837,46 @@ function limpiarFiltrosTablaRetos(){
   const ids=['tablaCurso','tablaTrimestre','tablaCategoria','tablaBuscar'];
   ids.forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   renderTablaRetos();
+}
+
+function historialProfesorHTML(a){
+  const items=[];
+  Object.keys((a&&a.retos)||{}).forEach(id=>{
+    const r=RETOS.find(x=>x.id==id);
+    if(r) items.push({titulo:'#'+r.id+' · '+r.texto,trimestre:r.trimestre,datos:a.retos[id]});
+  });
+  Object.values((a&&a.propios)||{}).forEach(r=>items.push({titulo:'Personal · '+r.titulo,trimestre:r.trimestre,datos:r}));
+  items.sort((x,y)=>x.trimestre-y.trimestre);
+  if(!items.length) return '<p class="small">Todavía no hay actividad registrada.</p>';
+  return items.map(it=>{
+    const d=it.datos||{};
+    return '<div class="guide-step"><b>'+it.trimestre+'.º T · '+it.titulo+'</b><br><span class="small">'+estadoTextoDatos(d)+'</span>'+htmlVideos(d.videos)+htmlActividad(d)+'</div>';
+  }).join('');
+}
+function renderCarpetasProfesor(){
+  const cont=document.getElementById('listaCarpetasProfesor');
+  if(!cont) return;
+  cont.innerHTML='';
+  const ids=alumnosFiltrados().sort((a,b)=>{
+    const aa=todosAlumnosData[a]&&todosAlumnosData[a].info;
+    const bb=todosAlumnosData[b]&&todosAlumnosData[b].info;
+    return ((aa&&aa.nombre)||'').localeCompare((bb&&bb.nombre)||'');
+  });
+  if(!ids.length){ cont.innerHTML='<p class="small">No hay alumnado registrado todavía con estos filtros.</p>'; return; }
+  ids.forEach(alId=>{
+    const a=todosAlumnosData[alId];
+    if(!a||!a.info) return;
+    const key=a.info.curso+'_'+a.info.clase+'|'+a.info.nombre;
+    const driveUrl=DRIVE_CARPETAS_ALUMNOS[key]||'';
+    const total=Object.keys(a.retos||{}).length+Object.keys(a.propios||{}).length;
+    const valid=Object.values(a.retos||{}).filter(x=>x.validadoProfe).length+Object.values(a.propios||{}).filter(x=>x.validadoProfe).length;
+    const card=document.createElement('div');
+    card.className='proposal-card';
+    card.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><div><b>'+a.info.nombre+'</b><div class="small">'+a.info.curso+' '+a.info.clase+' · '+total+' retos · '+valid+' validados</div></div>'+
+      (driveUrl?'<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="'+driveUrl+'">📁 Abrir Drive</a>':'<span class="small">Carpeta Drive no localizada</span>')+'</div>'+
+      '<details class="help-box" style="margin-top:10px;"><summary>Ver historial en la app</summary>'+historialProfesorHTML(a)+'</details>';
+    cont.appendChild(card);
+  });
 }
 
 function renderTablaRetos(){
@@ -1638,7 +1951,7 @@ function renderRegistro(){
         <td>${a.info.curso} ${a.info.clase}</td>
         <td>#${retoId} ${reto ? '· '+reto.texto.slice(0,40)+'…' : ''}</td>
         <td><span class="status-dot" style="background:${color}"></span>${est}</td>
-        <td>${d.comentario || '—'}</td>\n        <td>${htmlVideos(d.videos) || (d.foto ? '📷 evidencia antigua' : '—')}</td>\n        <td></td>`;
+        <td>${d.comentario || '—'}</td>\n        <td>${(htmlVideos(d.videos)+htmlActividad(d)) || (d.foto ? '📷 evidencia antigua' : '—')}</td>\n        <td></td>`;
       const tdAccion = tr.lastElementChild;
       if(est==='completado'){
         const btn = document.createElement('button');
@@ -1784,7 +2097,7 @@ function renderEvaluacion(){
       const todasEvidencias = validados.concat(propiosValidados);
       const conEvidencia = todasEvidencias.filter(d=>{
         const v=d.videos||{};
-        return d.comentario || v.inicio || v.progreso || v.final || d.foto;
+        return d.comentario || v.inicio || v.progreso || v.final || d.actividadUrl || d.foto;
       }).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
@@ -1840,7 +2153,7 @@ function exportGradesCSV(){
       const todasEvidencias = validados.concat(propiosValidados);
       const conEvidencia = todasEvidencias.filter(d=>{
         const v=d.videos||{};
-        return d.comentario || v.inicio || v.progreso || v.final || d.foto;
+        return d.comentario || v.inicio || v.progreso || v.final || d.actividadUrl || d.foto;
       }).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
@@ -1878,7 +2191,7 @@ function exportCSV(){
       const d = a.retos[retoId];
       const reto = RETOS.find(r=>r.id==retoId);
       const est = d.validadoProfe ? 'validado' : (d.estado==='completado' ? 'completado' : 'elegido');
-      const v=d.videos||{}; const links=[v.inicio,v.progreso,v.final].filter(Boolean).join(' | '); rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), links.replace(/,/g,';'), d.fecha||'']);
+      const v=d.videos||{}; const links=[v.inicio,v.progreso,v.final,d.actividadUrl].filter(Boolean).join(' | '); rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), links.replace(/,/g,';'), d.fecha||'']);
     });
   });
   const csv = rows.map(r=>r.join(',')).join('\n');
