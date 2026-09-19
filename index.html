@@ -93,8 +93,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
 .status-pending{background:#fff4d6;color:#7a5a00;}
 .status-approved{background:rgba(200,16,46,.10);color:var(--lime);}
 .status-rejected{background:#eee;color:#666;}
-.video-link-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
-.video-link-row a{font-size:12px;font-weight:700;color:var(--lime);text-decoration:none;border:1px solid var(--line);border-radius:20px;padding:4px 9px;background:#fff;}
+.activity-link-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.activity-link-row a{font-size:12px;font-weight:700;color:var(--lime);text-decoration:none;border:1px solid var(--line);border-radius:20px;padding:4px 9px;background:#fff;}
 .guide-step{padding:10px 0;border-bottom:1px solid var(--line);}
 .guide-step:last-child{border-bottom:0;}
 
@@ -176,12 +176,12 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <summary>¿Cómo funciona Retos EF?</summary>
       <div class="guide-step"><b>1. Elige o propón.</b> Puedes escoger un reto del banco de tu curso o proponer uno propio.</div>
       <div class="guide-step"><b>2. Si propones uno propio, lo aprueba el profesor.</b> Hasta que no esté aprobado no puntúa.</div>
-      <div class="guide-step"><b>3. Registra tu progreso.</b> Puedes añadir enlaces de Drive a vídeos cortos de INICIO, PROGRESO y FINAL y, cuando el reto lo permita, un registro de actividad de Strava, Garmin u otra app.</div>
+      <div class="guide-step"><b>3. Registra tu progreso.</b> Describe qué has hecho y qué has mejorado. Puedes añadir opcionalmente un registro de actividad o captura.</div>
       <div class="guide-step"><b>4. Strava y otras apps son opcionales.</b> No necesitas crear una cuenta para participar. Si usas una app deportiva, evita compartir públicamente tu domicilio, el inicio/final exactos de una ruta o datos de salud innecesarios.</div>
-      <div class="guide-step"><b>5. Los vídeos no se publican en redes.</b> Súbelos a tu Drive, compártelos como lector con <b>jorge.lanchas@triana.salesianos.edu</b> y pega aquí el enlace.</div>
-      <div class="guide-step"><b>6. La app guarda los enlaces, no los archivos.</b> Cuando termines, envía el reto a validar. El profesor revisará la evidencia.</div>
+      <div class="guide-step"><b>5. Sin grabaciones.</b> No es necesario grabarse ni aparecer en imágenes para demostrar un reto. Basta con describir el progreso.</div>
+      <div class="guide-step"><b>6. Validación.</b> Al terminar, envía tu reflexión y, si lo utilizas, el registro de actividad para que el profesor revise el reto.</div>
       <div class="guide-step"><b>7. Gimnasio en 4.º ESO.</b> Los retos de gimnasio valoran técnica, planificación, constancia y progreso personal. No puntúa levantar más peso que otros ni hacer pruebas de carga máxima.</div>
-      <div class="guide-step"><b>8. Cuida la privacidad.</b> Graba solo lo necesario para demostrar el reto y evita que aparezcan otras personas sin necesidad.</div>
+      <div class="guide-step"><b>8. Cuida la privacidad.</b> No compartas datos de salud ni el inicio o final exactos de tus recorridos.</div>
     </details>
 
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Mis retos</h2></div>
@@ -307,7 +307,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         <div style="overflow-x:auto;">
           <table id="tablaProfesor">
             <thead>
-              <tr><th>Alumno</th><th>Curso</th><th>Reto</th><th>Estado</th><th>Comentario</th><th>Vídeos</th><th>Acción</th></tr>
+              <tr><th>Alumno</th><th>Curso</th><th>Reto</th><th>Estado</th><th>Comentario</th><th>Registro de actividad</th><th>Acción</th></tr>
             </thead>
             <tbody id="tbodyProfesor"></tbody>
           </table>
@@ -330,7 +330,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
               <input type="number" id="umbral6" value="5" min="1" step="0.5" onchange="renderProfesor()">
             </div>
           </div>
-          <p class="small">Criterio 2 · Calidad/constancia: % de los retos validados con evidencia suficiente (enlace de Drive, comentario descriptivo o evidencia antigua).</p>
+          <p class="small">Criterio 2 · Calidad/constancia: porcentaje de retos validados con comentario de progreso o registro de actividad. No se exige grabación.</p>
           
         </div>
         <div class="filters">
@@ -421,9 +421,9 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
           <div class="guide-step"><b>Banco por curso y trimestre.</b> 2.º ESO y 4.º ESO tienen retos diferentes y el alumnado solo ve el trimestre activo.</div>
           <div class="guide-step"><b>Reto propio.</b> El alumno puede proponer un reto personal. No puntúa hasta tu aprobación.</div>
           <div class="guide-step"><b>Puntuación.</b> Al aprobar un reto propio asignas 1, 1,5 o 2 puntos.</div>
-          <div class="guide-step"><b>Vídeos de progreso.</b> Cada reto puede llevar enlaces de Drive para Inicio → Progreso → Final. También puede añadirse un registro de Strava/Garmin/otra app cuando tenga sentido. La app almacena únicamente los enlaces.</div>
-          <div class="guide-step"><b>Drive.</b> El alumno sube el vídeo a su Drive y lo comparte como lector contigo. En tu Drive <b>RETOS EF 2026-2027</b> hay una carpeta individual para cada uno de los 178 alumnos, organizada por curso y grupo.</div>
-          <div class="guide-step"><b>Privacidad.</b> Las carpetas generales no se comparten con las clases. Los vídeos no se publican en TikTok ni en otras redes desde esta app.</div>
+          <div class="guide-step"><b>Seguimiento.</b> El alumno describe su progreso y opcionalmente añade un registro deportivo o captura. No se solicitan grabaciones.</div>
+          <div class="guide-step"><b>Drive.</b> En <b>RETOS EF 2026-2027</b> hay una carpeta individual por alumno, organizada por curso y grupo. El historial de la app no exige subir archivos.</div>
+          <div class="guide-step"><b>Privacidad.</b> No se solicitan grabaciones; tampoco rutas GPS completas ni datos personales innecesarios.</div>
           <div class="guide-step"><b>Gimnasio y entrenamiento.</b> En 4.º ESO hay 15 retos específicos repartidos en los tres trimestres. Se valora técnica, planificación, constancia y progresión personal; no cargas máximas, comparaciones de fuerza ni cambios corporales.</div>
           <div class="guide-step"><b>Validación.</b> El alumno registra progreso; cuando marca el reto como terminado pasa a “Pendiente de validar”. Tú compruebas la evidencia y lo validas.</div>
           <div style="margin-top:14px;"><a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://drive.google.com/drive/folders/1688Z7AhRuAI7ZjE56qr9GQ9D2ltGiHdH">Abrir carpeta RETOS EF en Drive</a></div>
@@ -498,13 +498,7 @@ Juan López Ruiz
   <div class="modal">
     <h3 style="margin-top:0;">Registrar progreso</h3>
     <p class="small" id="modalRetoTexto"></p>
-    <p class="small">Sube tus vídeos a Google Drive, compártelos como <b>lector</b> con <b>jorge.lanchas@triana.salesianos.edu</b> y pega los enlaces. Puedes ir añadiéndolos en distintos días.</p>
-    <label>Vídeo · Inicio / punto de partida</label>
-    <input id="inVideoInicio" type="url" placeholder="https://drive.google.com/...">
-    <label>Vídeo · Progreso</label>
-    <input id="inVideoProgreso" type="url" placeholder="https://drive.google.com/...">
-    <label>Vídeo · Resultado final</label>
-    <input id="inVideoFinal" type="url" placeholder="https://drive.google.com/...">
+    <p class="small">Explica brevemente qué has practicado y qué has mejorado. No es necesario grabarse.</p>
     <label>Registro de actividad · opcional</label>
     <input id="inActividadExterna" type="url" placeholder="Strava, Garmin o enlace de Drive a una captura">
     <p class="small" style="margin-top:-6px;">También puedes subir a Drive una captura de Google Fit, Apple Fitness u otra app y pegar aquí su enlace. No hace falta usar ninguna plataforma externa.</p>
@@ -695,7 +689,7 @@ const RETOS_NUEVOS = [
   {id:309,cursos:["4ESO"],cat:"Deportes",texto:"Raqueta · precisión y continuidad: combina 10 servicios dirigidos a zona y un rally con otra persona. Registra resultados y una decisión táctica que te haya funcionado.",puntos:1.5,trimestre:1},
   {id:310,cursos:["4ESO"],cat:"Deportes",texto:"Táctica en juego reducido: participa en un 3x3 o 4x4 aplicando un objetivo táctico concreto (apoyos, amplitud, desmarque o cobertura). Describe 2 acciones en las que lo aplicaste.",puntos:2,trimestre:1},
   {id:311,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Recuperar también es entrenar: aplica tras 3 sesiones dos estrategias de recuperación (vuelta a la calma, movilidad, hidratación, descanso activo) y valora cuál te resulta más útil.",puntos:1,trimestre:1},
-  {id:312,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Fitness en redes: analiza una publicación o vídeo de entrenamiento. Identifica objetivo, nivel de exigencia, información que falta y una adaptación para una persona principiante.",puntos:1.5,trimestre:1},
+  {id:312,cursos:["4ESO"],cat:"Hábitos saludables",texto:"Fitness en redes: analiza una publicación sobre entrenamiento. Identifica objetivo, nivel de exigencia, información que falta y una adaptación para una persona principiante.",puntos:1.5,trimestre:1},
 
   // 4º ESO · 2º trimestre
   {id:313,cursos:["4ESO"],cat:"Condición Física",texto:"Sesión completa: diseña y ejecuta una sesión de 35-40 minutos con calentamiento, parte principal y vuelta a la calma. Incluye objetivo, tiempos y RPE final.",puntos:2,trimestre:2},
@@ -717,7 +711,7 @@ const RETOS_NUEVOS = [
   {id:327,cursos:["4ESO"],cat:"Condición Física",texto:"Progresión de fuerza: repite la misma sesión de 6 ejercicios al inicio y tres semanas después. Compara técnica, control, RPE y volumen, sin competir por cargas máximas.",puntos:2,trimestre:3},
   {id:328,cursos:["4ESO"],cat:"Condición Física",texto:"Plan de 2 semanas: organiza 4 sesiones combinando resistencia, fuerza y movilidad. Ejecuta el plan y explica qué adaptación hiciste sobre la marcha y por qué.",puntos:2,trimestre:3},
   {id:329,cursos:["4ESO"],cat:"Condición Física",texto:"Triana activa: diseña y realiza una ruta segura de 45-60 minutos por el entorno caminando, corriendo suavemente o en bici. Registra recorrido y una decisión de seguridad vial.",puntos:2,trimestre:3},
-  {id:330,cursos:["4ESO"],cat:"Deportes",texto:"Autoanálisis técnico: graba o describe dos intentos de una habilidad deportiva, identifica un aspecto técnico a mejorar y repite tras practicarlo.",puntos:2,trimestre:3},
+  {id:330,cursos:["4ESO"],cat:"Deportes",texto:"Autoanálisis técnico: compara y describe dos intentos de una habilidad deportiva, identifica un aspecto técnico a mejorar y repite tras practicarlo.",puntos:2,trimestre:3},
   {id:331,cursos:["4ESO"],cat:"Deportes",texto:"Plan táctico: antes de un juego reducido, acuerda con tu equipo una idea táctica sencilla. Juega, observa si funciona y explica un ajuste posterior.",puntos:2,trimestre:3},
   {id:332,cursos:["4ESO"],cat:"Deportes",texto:"Precisión bajo control: realiza 30 lanzamientos, servicios o golpeos a zonas objetivo. Calcula porcentaje de acierto total y por zona.",puntos:1.5,trimestre:3},
   {id:333,cursos:["4ESO"],cat:"Deportes",texto:"Lidera el calentamiento: diseña y dirige 12 minutos de calentamiento para un deporte concreto, justificando progresión y especificidad.",puntos:2,trimestre:3},
@@ -1524,7 +1518,7 @@ function renderAlumno(){
     let pillTxt = est==='validado' ? 'Validado' : (est==='completado' ? 'Pendiente de validar' : 'En progreso');
     div.innerHTML = `<div class="num">RETO #${reto.id} · ${reto.cat} · ${reto.puntos} pt${reto.puntos!==1?'s':''}</div>
       <p>${reto.texto}</p>
-      <span class="pill ${pillClass}">${pillTxt}</span>\n      ${htmlVideos((misRetosData[id]||{}).videos)}\n      ${htmlActividad(misRetosData[id]||{})}`;
+      <span class="pill ${pillClass}">${pillTxt}</span>\n      ${htmlActividad(misRetosData[id]||{})}`;
     if(est!=='validado'){
       const btn = document.createElement('button');
       btn.className='btn btn-lime btn-sm';
@@ -1601,7 +1595,7 @@ function renderHistorialAlumno(){
       '<b>'+it.titulo+'</b><p class="small" style="margin:6px 0;">'+it.texto+'</p>'+
       '<span class="pill '+(d.validadoProfe?'pill-completado':(d.estado==='completado'?'pill-pendiente':'pill-elegido'))+'">'+estadoTextoDatos(d)+'</span>'+
       (d.comentario?'<p class="small"><b>Reflexión:</b> '+d.comentario+'</p>':'')+
-      htmlVideos(d.videos)+htmlActividad(d);
+      htmlActividad(d);
     cont.appendChild(div);
   });
 }
@@ -1631,19 +1625,6 @@ function quitarReto(id){
 
 /* ======================= MODAL EVIDENCIA ======================= */
 
-function esEnlaceDrive(url){
-  if(!url) return true;
-  try{
-    const u = new URL(url);
-    return u.hostname === 'drive.google.com' || u.hostname === 'docs.google.com';
-  }catch(e){ return false; }
-}
-function htmlVideos(videos){
-  videos = videos || {};
-  const items = [['Inicio', videos.inicio],['Progreso', videos.progreso],['Final', videos.final]].filter(x=>x[1]);
-  if(!items.length) return '';
-  return '<div class="video-link-row">' + items.map(x=>'<a target="_blank" rel="noopener" href="'+x[1]+'">▶ '+x[0]+'</a>').join('') + '</div>';
-}
 function esEnlaceActividad(url){
   if(!url) return true;
   try{
@@ -1666,7 +1647,7 @@ function htmlActividad(d){
     else if(h.includes('garmin')) etiqueta='Garmin';
     else if(h.includes('drive')||h.includes('docs.google')) etiqueta='Captura / registro';
   }catch(e){}
-  return '<div class="video-link-row"><a target="_blank" rel="noopener" href="'+url+'">📍 '+etiqueta+'</a></div>';
+  return '<div class="activity-link-row"><a target="_blank" rel="noopener" href="'+url+'">📍 '+etiqueta+'</a></div>';
 }
 function abrirModal(retoId, tipo){
   modalRetoId = retoId;
@@ -1681,12 +1662,8 @@ function abrirModal(retoId, tipo){
     datos = misRetosData[retoId] || {};
     document.getElementById('modalRetoTexto').textContent = 'RETO #' + reto.id + ' · ' + reto.texto;
   }
-  const v = datos.videos || {};
   document.getElementById('chkAuto').checked = datos.estado === 'completado';
   document.getElementById('inComentario').value = datos.comentario || '';
-  document.getElementById('inVideoInicio').value = v.inicio || '';
-  document.getElementById('inVideoProgreso').value = v.progreso || '';
-  document.getElementById('inVideoFinal').value = v.final || '';
   document.getElementById('inActividadExterna').value = datos.actividadUrl || '';
   document.getElementById('modalEvidencia').classList.remove('hidden');
 }
@@ -1696,25 +1673,18 @@ function cerrarModal(){
   modalTipoReto = 'catalogo';
 }
 function guardarEvidencia(){
-  const inicio = document.getElementById('inVideoInicio').value.trim();
-  const progreso = document.getElementById('inVideoProgreso').value.trim();
-  const final = document.getElementById('inVideoFinal').value.trim();
   const actividadUrl = document.getElementById('inActividadExterna').value.trim();
   const comentario = document.getElementById('inComentario').value.trim();
-  if(![inicio,progreso,final].every(esEnlaceDrive)){
-    alert('Los enlaces de vídeo deben ser enlaces válidos de Google Drive.');
-    return;
-  }
   if(!esEnlaceActividad(actividadUrl)){
     alert('El registro de actividad debe ser un enlace válido de Strava, Garmin, Adidas Running o Google Drive.');
     return;
   }
-  if(!inicio && !progreso && !final && !actividadUrl && !comentario){
+  if(!actividadUrl && !comentario){
     alert('Añade al menos una evidencia o un comentario de progreso.');
     return;
   }
   const terminado = document.getElementById('chkAuto').checked;
-  const datos = {estado:terminado?'completado':'elegido',comentario,videos:{inicio,progreso,final},actividadUrl,fecha:new Date().toISOString(),validadoProfe:false};
+  const datos = {estado:terminado?'completado':'elegido',comentario,actividadUrl,fecha:new Date().toISOString(),validadoProfe:false};
   if(modalTipoReto === 'propio'){
     const previo = misRetosPropiosData[modalRetoId] || {};
     misRetosPropiosData[modalRetoId] = {...previo, ...datos};
@@ -1744,7 +1714,7 @@ function guardarPropuestaReto(){
   const categoria=document.getElementById('rpCategoria').value;
   if(!titulo||!objetivo||!porQue||!plan){ alert('Completa título, objetivo, por qué supone un reto y cómo vas a trabajarlo.'); return; }
   const id='p_'+Date.now().toString(36);
-  misRetosPropiosData[id]={id,titulo,objetivo,porQue,plan,categoria,trimestre:trimestreActivo,estadoAprobacion:'pendiente',estado:'propuesto',puntos:0,comentarioProfe:'',videos:{},comentario:'',validadoProfe:false,fecha:new Date().toISOString()};
+  misRetosPropiosData[id]={id,titulo,objetivo,porQue,plan,categoria,trimestre:trimestreActivo,estadoAprobacion:'pendiente',estado:'propuesto',puntos:0,comentarioProfe:'',comentario:'',validadoProfe:false,fecha:new Date().toISOString()};
   guardarLocal();
   cerrarModalRetoPropio();
   mostrarToast('Propuesta enviada al profesor.',2500);
@@ -1762,7 +1732,7 @@ function renderRetosPropiosAlumno(){
     if(r.estadoAprobacion==='aprobado'){cls='status-approved';txt='Aprobado · '+r.puntos+' pt'+(r.puntos!==1?'s':'');}
     if(r.estadoAprobacion==='rechazado'){cls='status-rejected';txt='No aprobado';}
     const est=r.validadoProfe?'<span class="pill pill-completado">Validado</span>':(r.estado==='completado'?'<span class="pill pill-pendiente">Pendiente de validar</span>':'');
-    div.innerHTML='<b>'+r.titulo+'</b><p class="small" style="margin:6px 0;">'+r.objetivo+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlVideos(r.videos)+htmlActividad(r);
+    div.innerHTML='<b>'+r.titulo+'</b><p class="small" style="margin:6px 0;">'+r.objetivo+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlActividad(r);
     if(r.estadoAprobacion==='aprobado'&&!r.validadoProfe){
       const btn=document.createElement('button'); btn.className='btn btn-ghost btn-sm'; btn.style.marginTop='8px'; btn.textContent='Registrar progreso'; btn.onclick=()=>abrirModal(r.id,'propio'); div.appendChild(btn);
     }
@@ -1821,7 +1791,7 @@ function persistirAlumnoProfesor(alId){
   if(fbEnabled) db.ref('retosEF/alumnos/'+alId).set(a);
   else localStorage.setItem(localKeyAlumno(alId),JSON.stringify(a));
 }
-function enlacesEvidenciaHTML(d){ return htmlVideos((d||{}).videos) || '<span class="small">Sin vídeos</span>'; }
+function enlacesEvidenciaHTML(d){ return ((d||{}).comentario ? '<span class="small">Con reflexión</span><br>' : '') + (htmlActividad(d) || '<span class="small">Sin registro externo</span>'); }
 function renderRetosPropiosProfesor(){
   const tbody=document.getElementById('tbodyRetosPropios');
   if(!tbody) return;
@@ -1882,7 +1852,7 @@ function historialProfesorHTML(a){
   if(!items.length) return '<p class="small">Todavía no hay actividad registrada.</p>';
   return items.map(it=>{
     const d=it.datos||{};
-    return '<div class="guide-step"><b>'+it.trimestre+'.º T · '+it.titulo+'</b><br><span class="small">'+estadoTextoDatos(d)+'</span>'+htmlVideos(d.videos)+htmlActividad(d)+'</div>';
+    return '<div class="guide-step"><b>'+it.trimestre+'.º T · '+it.titulo+'</b><br><span class="small">'+estadoTextoDatos(d)+'</span>'+htmlActividad(d)+'</div>';
   }).join('');
 }
 function renderCarpetasProfesor(){
@@ -1994,7 +1964,7 @@ function renderRegistro(){
         <td>${a.info.curso} ${a.info.clase}</td>
         <td>#${retoId} ${reto ? '· '+reto.texto.slice(0,40)+'…' : ''}</td>
         <td><span class="status-dot" style="background:${color}"></span>${est}</td>
-        <td>${d.comentario || '—'}</td>\n        <td>${(htmlVideos(d.videos)+htmlActividad(d)) || (d.foto ? '📷 evidencia antigua' : '—')}</td>\n        <td></td>`;
+        <td>${d.comentario || '—'}</td>\n        <td>${(htmlActividad(d)) || (d.foto ? '📷 evidencia antigua' : '—')}</td>\n        <td></td>`;
       const tdAccion = tr.lastElementChild;
       if(est==='completado'){
         const btn = document.createElement('button');
@@ -2139,8 +2109,7 @@ function renderEvaluacion(){
     if(nValidados > 0){
       const todasEvidencias = validados.concat(propiosValidados);
       const conEvidencia = todasEvidencias.filter(d=>{
-        const v=d.videos||{};
-        return d.comentario || v.inicio || v.progreso || v.final || d.actividadUrl || d.foto;
+        return d.comentario || d.actividadUrl;
       }).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
@@ -2195,8 +2164,7 @@ function exportGradesCSV(){
     if(nValidados > 0){
       const todasEvidencias = validados.concat(propiosValidados);
       const conEvidencia = todasEvidencias.filter(d=>{
-        const v=d.videos||{};
-        return d.comentario || v.inicio || v.progreso || v.final || d.actividadUrl || d.foto;
+        return d.comentario || d.actividadUrl;
       }).length;
       c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
     }
@@ -2226,7 +2194,7 @@ function validarReto(alId, retoId){
 }
 
 function exportCSV(){
-  let rows = [['Alumno','Curso','Clase','Reto','Categoria','Estado','Comentario','VideosDrive','Fecha']];
+  let rows = [['Alumno','Curso','Clase','Reto','Categoria','Estado','Comentario','RegistroActividad','Fecha']];
   alumnosFiltrados().forEach(alId=>{
     const a = todosAlumnosData[alId];
     Object.keys(a.retos||{}).forEach(retoId=>{
@@ -2234,7 +2202,7 @@ function exportCSV(){
       const d = a.retos[retoId];
       const reto = RETOS.find(r=>r.id==retoId);
       const est = d.validadoProfe ? 'validado' : (d.estado==='completado' ? 'completado' : 'elegido');
-      const v=d.videos||{}; const links=[v.inicio,v.progreso,v.final,d.actividadUrl].filter(Boolean).join(' | '); rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), links.replace(/,/g,';'), d.fecha||'']);
+      const links=[d.actividadUrl].filter(Boolean).join(' | '); rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), links.replace(/,/g,';'), d.fecha||'']);
     });
   });
   const csv = rows.map(r=>r.join(',')).join('\n');
