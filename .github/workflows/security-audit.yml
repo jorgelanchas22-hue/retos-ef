@@ -1,0 +1,33 @@
+name: Auditoría de acceso a Firebase
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  access-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check student isolation without exposing data
+        shell: bash
+        env:
+          API_KEY: "AIzaSyClXyE442TxG4CHXYS1bvXF6Q6oILFAtEQ"
+          DB_URL: "https://retos-ef-default-rtdb.europe-west1.firebasedatabase.app"
+        run: |
+          set -euo pipefail
+          AUTH_JSON=$(curl -fsS -X POST "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$API_KEY" -H 'Content-Type: application/json' -d '{"returnSecureToken":true}')
+          TOKEN=$(python3 -c 'import json,sys; print(json.load(sys.stdin)["idToken"])' <<< "$AUTH_JSON")
+          ROOT_CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$DB_URL/retosEF/alumnos.json?auth=$TOKEN")
+          OTHER_CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$DB_URL/retosEF/alumnos/smoke_nonexistent_other_student.json?auth=$TOKEN")
+          CONFIG_CODE=$(curl -sS -o /dev/null -w '%{http_code}' "$DB_URL/retosEF/config/trimestreActivo.json?auth=$TOKEN")
+          echo "Anonymous read of all students: HTTP $ROOT_CODE"
+          echo "Anonymous read of another student path: HTTP $OTHER_CODE"
+          echo "Anonymous read of trimester config: HTTP $CONFIG_CODE"
+          if [ "$ROOT_CODE" = '200' ]; then echo 'RISK: anonymous student can read the class register'; fi
+          if [ "$OTHER_CODE" = '200' ]; then echo 'RISK: anonymous student can read arbitrary student path'; fi
+          if [ "$ROOT_CODE" = '200' ] || [ "$OTHER_CODE" = '200' ]; then exit 1; fi
+          echo 'PASS: Anonymous student cross-record reading is denied.'
