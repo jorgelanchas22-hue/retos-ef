@@ -1189,7 +1189,9 @@ function cargarPropiosLocal(id){
 }
 
 function syncFirebase(){
-  if(!fbEnabled || !alumno) return Promise.resolve();
+  if(!fbEnabled || !alumno || !auth || !auth.currentUser){
+    return Promise.reject(new Error('No hay conexión autenticada con Firebase'));
+  }
   return db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData, propios:misRetosPropiosData})
     .then(()=>{
       document.getElementById('syncBadge').textContent = '● Firebase conectado';
@@ -1199,6 +1201,7 @@ function syncFirebase(){
       console.error('Error guardando en Firebase:', err);
       document.getElementById('syncBadge').textContent = '⚠ No se pudo guardar en la nube (revisa reglas/autenticación)';
       document.getElementById('syncBadge').style.color = 'var(--coral)';
+      throw err;
     });
 }
 
@@ -1348,7 +1351,8 @@ function loginAlumno(){
         continuar();
       }).catch(err=>{
         console.error('Error leyendo de Firebase:', err);
-        continuar();
+        document.getElementById('loginError').textContent = 'No se pudo abrir tu registro. Avisa al profesor y vuelve a intentarlo.';
+        alumno = null;
       });
     }).catch(err=>{
       console.error('Error de autenticación anónima en Firebase:', err);
@@ -1356,7 +1360,8 @@ function loginAlumno(){
       alumno = null;
     });
   } else {
-    continuar();
+    document.getElementById('loginError').textContent = 'El registro no está disponible. Inténtalo más tarde.';
+    alumno = null;
   }
 }
 
@@ -1612,7 +1617,7 @@ function elegirReto(id){
   misRetosData[id] = {estado:'elegido', fecha: new Date().toISOString()};
   guardarLocal();
   mostrarToast('Guardando...', 8000);
-  syncFirebase().finally(()=>location.reload());
+  syncFirebase().then(()=>location.reload()).catch(()=>mostrarToast('No se guardó en la nube. Avisa al profesor y no cierres esta página.',8000));
 }
 
 function quitarReto(id){
@@ -1620,7 +1625,7 @@ function quitarReto(id){
   delete misRetosData[id];
   guardarLocal();
   mostrarToast('Guardando...', 8000);
-  syncFirebase().finally(()=>location.reload());
+  syncFirebase().then(()=>location.reload()).catch(()=>mostrarToast('No se guardó en la nube. Avisa al profesor y no cierres esta página.',8000));
 }
 
 /* ======================= MODAL EVIDENCIA ======================= */
@@ -1694,8 +1699,10 @@ function guardarEvidencia(){
   }
   guardarLocal();
   cerrarModal();
-  mostrarToast(terminado ? 'Reto enviado para validar.' : 'Progreso guardado.',2500);
-  syncFirebase().finally(()=>renderAlumno());
+  mostrarToast('Guardando en la nube…',8000);
+  syncFirebase().then(()=>mostrarToast(terminado ? 'Reto enviado para validar.' : 'Progreso guardado.',2500))
+    .catch(()=>mostrarToast('No se guardó en la nube. Avisa al profesor y no cierres esta página.',8000))
+    .finally(()=>renderAlumno());
 }
 
 function abrirModalRetoPropio(){
@@ -1717,8 +1724,10 @@ function guardarPropuestaReto(){
   misRetosPropiosData[id]={id,titulo,objetivo,porQue,plan,categoria,trimestre:trimestreActivo,estadoAprobacion:'pendiente',estado:'propuesto',puntos:0,comentarioProfe:'',comentario:'',validadoProfe:false,fecha:new Date().toISOString()};
   guardarLocal();
   cerrarModalRetoPropio();
-  mostrarToast('Propuesta enviada al profesor.',2500);
-  syncFirebase().finally(()=>renderAlumno());
+  mostrarToast('Guardando en la nube…',8000);
+  syncFirebase().then(()=>mostrarToast('Propuesta enviada al profesor.',2500))
+    .catch(()=>mostrarToast('No se guardó en la nube. Avisa al profesor y no cierres esta página.',8000))
+    .finally(()=>renderAlumno());
 }
 function renderRetosPropiosAlumno(){
   const cont=document.getElementById('misRetosPropios');
