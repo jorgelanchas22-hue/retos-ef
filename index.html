@@ -2226,8 +2226,24 @@ console.log('Retos EF · build ' + new Date().toISOString().slice(0,16).replace(
 
 // Auto-reentrar si hay una sesión de alumno guardada (tras un refresco automático)
 function autoLoginSesion(){
-  const raw = localStorage.getItem('retosEF_sesion');
+  let raw = localStorage.getItem('retosEF_sesion');
+
+  // Si el alumno ya se identificó en Tareas EF, reutilizamos esa misma identidad.
+  if(!raw){
+    try{
+      const identidadTareas = JSON.parse(localStorage.getItem('ef_student_identity_2026_2027')||'null');
+      if(identidadTareas && identidadTareas.course && identidadTareas.group && identidadTareas.name){
+        const curso = identidadTareas.course==='2' ? '2ESO' : identidadTareas.course==='4' ? '4ESO' : '';
+        const clase = String(identidadTareas.group).replace(/^2|^4/,'');
+        if(curso && ['A','B','C'].includes(clase)){
+          raw = JSON.stringify({nombre:identidadTareas.name, curso, clase});
+        }
+      }
+    }catch(e){ console.warn('No se pudo reutilizar la identificación de Tareas EF', e); }
+  }
+
   if(!raw) return;
+
   try{
     const sesion = JSON.parse(raw);
     document.getElementById('inCurso').value = sesion.curso;
@@ -2236,7 +2252,11 @@ function autoLoginSesion(){
     const sel = document.getElementById('inNombreSelect');
     if(!sel.classList.contains('hidden')){
       sel.value = sesion.nombre;
-      if(sel.value !== sesion.nombre){ sel.value = '__otro__'; cambioSelectNombre(); document.getElementById('inNombre').value = sesion.nombre; }
+      if(sel.value !== sesion.nombre){
+        sel.value = '__otro__';
+        cambioSelectNombre();
+        document.getElementById('inNombre').value = sesion.nombre;
+      }
     } else {
       document.getElementById('inNombre').value = sesion.nombre;
     }
