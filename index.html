@@ -1002,7 +1002,23 @@ function syncFirebase(){
   if(!fbEnabled || !alumno || !auth || !auth.currentUser){
     return Promise.reject(new Error('No hay conexión autenticada con Firebase'));
   }
-  return db.ref('retosEF/alumnos/' + alumno.id).set({info:alumno, retos:misRetosData, propios:misRetosPropiosData})
+  // Evitar sobrescribir con un registro antiguo las validaciones del profesor.
+  // Esta escritura requiere las reglas finales de acceso por UID antes de publicarse.
+  return db.ref('retosEF/alumnos/' + alumno.id).transaction(actual=>{
+    if(actual===undefined) return;
+    const datos=actual || {};
+    const retos={...(datos.retos||{})};
+    Object.entries(misRetosData).forEach(([id,progreso])=>{
+      const anterior=retos[id]||{};
+      retos[id]={...anterior,estado:progreso.estado,comentario:progreso.comentario||'',actividadUrl:progreso.actividadUrl||'',fecha:progreso.fecha||anterior.fecha};
+    });
+    const propios={...(datos.propios||{})};
+    Object.entries(misRetosPropiosData).forEach(([id,progreso])=>{
+      const anterior=propios[id]||{};
+      propios[id]={...anterior,...progreso,validadoProfe:anterior.validadoProfe||false,estadoAprobacion:anterior.estadoAprobacion||'pendiente',puntos:anterior.puntos||0,comentarioProfe:anterior.comentarioProfe||''};
+    });
+    return {...datos,info:datos.info||alumno,retos,propios};
+  })
     .then(()=>{
       document.getElementById('syncBadge').textContent = '● Firebase conectado';
       document.getElementById('syncBadge').style.color = '';
