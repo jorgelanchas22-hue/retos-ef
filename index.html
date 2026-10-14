@@ -1255,7 +1255,7 @@ function guardarTrimestreActivo(nuevo){
 /* ======================= CONFIG: LISTAS DE CLASE ======================= */
 function cargarListasClase(cb){
   const aplicarOficiales = (base)=>{
-    listasClase = {...(base || {}), ...LISTAS_OFICIALES};
+    listasClase = {...LISTAS_OFICIALES, ...(base || {})};
     localStorage.setItem('retosEF_listas', JSON.stringify(listasClase));
     cb && cb();
   };
@@ -1642,6 +1642,7 @@ function esEnlaceActividad(url){
       h==='adidasrunning.com' || h.endsWith('.adidasrunning.com');
   }catch(e){ return false; }
 }
+function escaparTexto(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function htmlActividad(d){
   const url=(d||{}).actividadUrl;
   if(!url) return '';
@@ -1741,7 +1742,7 @@ function renderRetosPropiosAlumno(){
     if(r.estadoAprobacion==='aprobado'){cls='status-approved';txt='Aprobado · '+r.puntos+' pt'+(r.puntos!==1?'s':'');}
     if(r.estadoAprobacion==='rechazado'){cls='status-rejected';txt='No aprobado';}
     const est=r.validadoProfe?'<span class="pill pill-completado">Validado</span>':(r.estado==='completado'?'<span class="pill pill-pendiente">Pendiente de validar</span>':'');
-    div.innerHTML='<b>'+r.titulo+'</b><p class="small" style="margin:6px 0;">'+r.objetivo+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlActividad(r);
+    div.innerHTML='<b>'+escaparTexto(r.titulo)+'</b><p class="small" style="margin:6px 0;">'+escaparTexto(r.objetivo)+'</p><span class="proposal-status '+cls+'">'+txt+'</span> '+est+(r.comentarioProfe?'<p class="small"><b>Profesor:</b> '+r.comentarioProfe+'</p>':'')+htmlActividad(r);
     if(r.estadoAprobacion==='aprobado'&&!r.validadoProfe){
       const btn=document.createElement('button'); btn.className='btn btn-ghost btn-sm'; btn.style.marginTop='8px'; btn.textContent='Registrar progreso'; btn.onclick=()=>abrirModal(r.id,'propio'); div.appendChild(btn);
     }
@@ -1796,9 +1797,16 @@ function renderProfesor(){
 
 function persistirAlumnoProfesor(alId){
   const a=todosAlumnosData[alId];
-  if(!a) return;
-  if(fbEnabled) db.ref('retosEF/alumnos/'+alId).set(a);
-  else localStorage.setItem(localKeyAlumno(alId),JSON.stringify(a));
+  if(!a) return Promise.reject(new Error('Alumno no encontrado'));
+  if(!fbEnabled || !auth || !auth.currentUser || !esProfesor){
+    mostrarToast('No se puede guardar: inicia sesión como profesor y comprueba Firebase.',6000);
+    return Promise.reject(new Error('No hay sesión docente autenticada'));
+  }
+  return db.ref('retosEF/alumnos/'+alId).set(a).catch(err=>{
+    console.error('Error al guardar la valoración del profesor:',err);
+    mostrarToast('ERROR: no se guardó el cambio en Firebase. Recarga antes de continuar.',8000);
+    throw err;
+  });
 }
 function enlacesEvidenciaHTML(d){ return ((d||{}).comentario ? '<span class="small">Con reflexión</span><br>' : '') + (htmlActividad(d) || '<span class="small">Sin registro externo</span>'); }
 function renderRetosPropiosProfesor(){
@@ -1812,7 +1820,7 @@ function renderRetosPropiosProfesor(){
       if(t!==null && r.trimestre!==t) return;
       const tr=document.createElement('tr');
       const estado=r.estadoAprobacion==='pendiente'?'Pendiente':r.estadoAprobacion==='rechazado'?'No aprobado':(r.validadoProfe?'Validado':(r.estado==='completado'?'Pendiente de validar':'Aprobado'));
-      tr.innerHTML='<td>'+a.info.nombre+'</td><td>'+a.info.curso+' '+a.info.clase+'</td><td><b>'+r.titulo+'</b><br><span class="small">'+r.objetivo+'</span><br><span class="small"><b>Por qué:</b> '+r.porQue+'</span><br><span class="small"><b>Plan:</b> '+r.plan+'</span></td><td>'+estado+(r.puntos?' · '+r.puntos+' pts':'')+(r.comentarioProfe?'<br><span class="small">'+r.comentarioProfe+'</span>':'')+'</td><td>'+enlacesEvidenciaHTML(r)+'</td><td></td>';
+      tr.innerHTML='<td>'+escaparTexto(a.info.nombre)+'</td><td>'+escaparTexto(a.info.curso)+' '+escaparTexto(a.info.clase)+'</td><td><b>'+escaparTexto(r.titulo)+'</b><br><span class="small">'+escaparTexto(r.objetivo)+'</span><br><span class="small"><b>Por qué:</b> '+escaparTexto(r.porQue)+'</span><br><span class="small"><b>Plan:</b> '+escaparTexto(r.plan)+'</span></td><td>'+estado+(r.puntos?' · '+r.puntos+' pts':'')+(r.comentarioProfe?'<br><span class="small">'+r.comentarioProfe+'</span>':'')+'</td><td>'+enlacesEvidenciaHTML(r)+'</td><td></td>';
       const td=tr.lastElementChild;
       if(r.estadoAprobacion==='pendiente'){
         [1,1.5,2].forEach(pts=>{
