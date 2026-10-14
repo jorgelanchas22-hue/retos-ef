@@ -1153,21 +1153,32 @@ function loginAlumno(){
   }
 
   if(fbEnabled){
-    auth.signInAnonymously().then(()=>{
-      db.ref('retosEF/alumnos/' + id).once('value').then(snap=>{
-        const remoto = snap.val();
-        if(remoto && remoto.retos) misRetosData = remoto.retos;
-        if(remoto && remoto.propios) misRetosPropiosData = remoto.propios;
-        continuar();
-      }).catch(err=>{
-        console.error('Error leyendo de Firebase:', err);
-        document.getElementById('loginError').textContent = 'No se pudo abrir tu registro. Avisa al profesor y vuelve a intentarlo.';
-        alumno = null;
-      });
+    // Migración preparada: la identidad de Google debe estar asociada por el profesor
+    // al identificador histórico, para conservar los retos sin cambiar las claves.
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    const iniciar = auth.currentUser && !auth.currentUser.isAnonymous
+      ? Promise.resolve({user:auth.currentUser}) : auth.signInWithPopup(provider);
+    iniciar.then(async res=>{
+      const usuario = res.user;
+      if(!usuario || usuario.isAnonymous || !usuario.emailVerified){
+        throw new Error('Se necesita una cuenta de Google con correo verificado.');
+      }
+      const vinculoSnap = await db.ref('retosEF/identidades/' + usuario.uid).once('value');
+      const vinculo = vinculoSnap.val();
+      if(!vinculo || vinculo.alumnoId !== id){
+        throw new Error('Tu cuenta no está vinculada a este alumno. Pide al profesor que la autorice.');
+      }
+      const snap = await db.ref('retosEF/alumnos/' + id).once('value');
+      const remoto = snap.val();
+      if(remoto && remoto.retos) misRetosData = remoto.retos;
+      if(remoto && remoto.propios) misRetosPropiosData = remoto.propios;
+      continuar();
     }).catch(err=>{
-      console.error('Error de autenticación anónima en Firebase:', err);
-      document.getElementById('loginError').textContent = 'No se puede conectar con el registro del profesor. Inténtalo más tarde y no registres retos hasta que la conexión esté disponible.';
+      console.error('No se pudo verificar la identidad del alumno:',err);
+      document.getElementById('loginError').textContent = err.message || 'No se pudo verificar tu cuenta. Avisa al profesor.';
       alumno = null;
+      localStorage.removeItem('retosEF_sesion');
     });
   } else {
     document.getElementById('loginError').textContent = 'El registro no está disponible. Inténtalo más tarde.';
