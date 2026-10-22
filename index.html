@@ -330,7 +330,14 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
               <input type="number" id="umbral6" value="5" min="1" step="0.5" onchange="renderProfesor()">
             </div>
           </div>
-          <p class="small">Criterio 2 · Calidad/constancia: porcentaje de retos validados con comentario de progreso o registro de actividad. No se exige grabación.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
+            <div>
+              <label>Criterio 2 · Retos con evidencia para nota 10</label>
+              <input type="number" id="umbralEvid10" value="5" min="1" step="1" onchange="renderProfesor()">
+            </div>
+          </div>
+          <p class="small">Criterio 2 · Calidad/constancia: número de retos validados con comentario de progreso o registro de actividad (no porcentaje). No se exige grabación.</p>
+          <p class="small"><strong>Mínimo para aprobar:</strong> si no se llega a los puntos mínimos del Criterio 1, la nota final no puede pasar de 4, aunque el Criterio 2 sea alto.</p>
           
         </div>
         <div class="filters">
@@ -1892,9 +1899,50 @@ function redondearNotaDiscreta(n){
   return Math.min(10, Math.max(0, Math.round(n/2)*2));
 }
 
+function calcularNotaAlumno(a, t, umbral10, umbral6, umbralEvid10){
+  const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
+  const retos = retosIds.map(id=>a.retos[id]);
+  const propios = Object.values(a.propios||{}).filter(r=>r.trimestre===t && r.estadoAprobacion==='aprobado');
+  const validados = retos.filter(d=>d.validadoProfe);
+  const propiosValidados = propios.filter(d=>d.validadoProfe);
+  const nValidados = validados.length + propiosValidados.length;
+  let puntosAcum = 0;
+  retosIds.forEach(retoId=>{
+    const d = a.retos[retoId];
+    if(!d.validadoProfe) return;
+    const reto = RETOS.find(r=>r.id==retoId);
+    puntosAcum += reto ? reto.puntos : 1;
+  });
+  propiosValidados.forEach(r=>{ puntosAcum += parseFloat(r.puntos)||0; });
+
+  // Criterio 1: puntos de dificultad acumulados, interpolado de forma discreta
+  let c1;
+  if(puntosAcum >= umbral10) c1 = 10;
+  else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/Math.max(0.5,umbral10-umbral6)*4);
+  else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
+  c1 = redondearNotaDiscreta(c1);
+
+  // Criterio 2: NÚMERO de retos validados con evidencia (no porcentaje)
+  const conEvidencia = validados.concat(propiosValidados).filter(d=>d.comentario || d.actividadUrl).length;
+  const c2 = redondearNotaDiscreta((conEvidencia/Math.max(1,umbralEvid10))*10);
+
+  // Nota final = media; si no llega al mínimo de puntos, tope de 4
+  let notaFinal = redondearNotaDiscreta((c1+c2)/2);
+  if(puntosAcum < umbral6) notaFinal = Math.min(notaFinal, 4);
+
+  return {nValidados, puntosAcum: Math.round(puntosAcum*10)/10, c1, c2, notaFinal};
+}
+
+function leerUmbrales(){
+  return {
+    umbral10: parseFloat(document.getElementById('umbral10').value) || 10,
+    umbral6: parseFloat(document.getElementById('umbral6').value) || 5,
+    umbralEvid10: parseFloat(document.getElementById('umbralEvid10').value) || 5
+  };
+}
+
 function renderEvaluacion(){
-  const umbral10 = parseFloat(document.getElementById('umbral10').value) || 10;
-  const umbral6 = parseFloat(document.getElementById('umbral6').value) || 5;
+  const {umbral10, umbral6, umbralEvid10} = leerUmbrales();
   const tbody = document.getElementById('tbodyEvaluacion');
   tbody.innerHTML = '';
   const tLabel = document.getElementById('evalTrimestreTxt');
@@ -1909,39 +1957,7 @@ function renderEvaluacion(){
 
   alumnosFiltrados().forEach(alId=>{
     const a = todosAlumnosData[alId];
-    const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
-    const retos = retosIds.map(id=>a.retos[id]);
-    const propios = Object.values(a.propios||{}).filter(r=>r.trimestre===t && r.estadoAprobacion==='aprobado');
-    const validados = retos.filter(d=>d.validadoProfe);
-    const propiosValidados = propios.filter(d=>d.validadoProfe);
-    const nValidados = validados.length + propiosValidados.length;
-    let puntosAcum = 0;
-    retosIds.forEach(retoId=>{
-      const d = a.retos[retoId];
-      if(!d.validadoProfe) return;
-      const reto = RETOS.find(r=>r.id==retoId);
-      puntosAcum += reto ? reto.puntos : 1;
-    });
-    propiosValidados.forEach(r=>{ puntosAcum += parseFloat(r.puntos)||0; });
-
-    // Criterio 1: puntos de dificultad acumulados, interpolado de forma discreta
-    let c1;
-    if(puntosAcum >= umbral10) c1 = 10;
-    else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
-    else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
-    c1 = redondearNotaDiscreta(c1);
-
-    // Criterio 2: % de retos validados con evidencia suficiente
-    let c2 = 0;
-    if(nValidados > 0){
-      const todasEvidencias = validados.concat(propiosValidados);
-      const conEvidencia = todasEvidencias.filter(d=>{
-        return d.comentario || d.actividadUrl;
-      }).length;
-      c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
-    }
-
-    const notaFinal = redondearNotaDiscreta((c1+c2)/2);
+    const {nValidados, puntosAcum, c1, c2, notaFinal} = calcularNotaAlumno(a, t, umbral10, umbral6, umbralEvid10);
     const claseNota = notaFinal >= 5 ? 'nota-aprobado' : 'nota-suspenso';
 
     const tr = document.createElement('tr');
@@ -1963,39 +1979,11 @@ function exportGradesCSV(){
     alert('Elige un trimestre concreto (1º, 2º o 3º) para exportar las notas.');
     return;
   }
-  const umbral10 = parseFloat(document.getElementById('umbral10').value) || 10;
-  const umbral6 = parseFloat(document.getElementById('umbral6').value) || 5;
+  const {umbral10, umbral6, umbralEvid10} = leerUmbrales();
   let rows = [['Alumno','Curso','Clase','RetosValidados','PuntosAcumulados','Criterio1_Puntos','Criterio2_Evidencia','NotaFinal']];
   alumnosFiltrados().forEach(alId=>{
     const a = todosAlumnosData[alId];
-    const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
-    const retos = retosIds.map(id=>a.retos[id]);
-    const propios = Object.values(a.propios||{}).filter(r=>r.trimestre===t && r.estadoAprobacion==='aprobado');
-    const validados = retos.filter(d=>d.validadoProfe);
-    const propiosValidados = propios.filter(d=>d.validadoProfe);
-    const nValidados = validados.length + propiosValidados.length;
-    let puntosAcum = 0;
-    retosIds.forEach(retoId=>{
-      const d = a.retos[retoId];
-      if(!d.validadoProfe) return;
-      const reto = RETOS.find(r=>r.id==retoId);
-      puntosAcum += reto ? reto.puntos : 1;
-    });
-    propiosValidados.forEach(r=>{ puntosAcum += parseFloat(r.puntos)||0; });
-    let c1;
-    if(puntosAcum >= umbral10) c1 = 10;
-    else if(puntosAcum >= umbral6) c1 = 6 + redondearNotaDiscreta((puntosAcum-umbral6)/(umbral10-umbral6)*4);
-    else c1 = redondearNotaDiscreta((puntosAcum/Math.max(1,umbral6))*6);
-    c1 = redondearNotaDiscreta(c1);
-    let c2 = 0;
-    if(nValidados > 0){
-      const todasEvidencias = validados.concat(propiosValidados);
-      const conEvidencia = todasEvidencias.filter(d=>{
-        return d.comentario || d.actividadUrl;
-      }).length;
-      c2 = redondearNotaDiscreta((conEvidencia/nValidados)*10);
-    }
-    const notaFinal = redondearNotaDiscreta((c1+c2)/2);
+    const {nValidados, puntosAcum, c1, c2, notaFinal} = calcularNotaAlumno(a, t, umbral10, umbral6, umbralEvid10);
     rows.push([a.info.nombre, a.info.curso, a.info.clase, nValidados, puntosAcum, c1, c2, notaFinal]);
   });
   const csv = rows.map(r=>r.join(',')).join('\n');
