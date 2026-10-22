@@ -82,6 +82,14 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
 .bar-track{flex:1;height:18px;background:var(--navy-2);border-radius:9px;overflow:hidden;}
 .bar-fill{height:100%;background:var(--lime);border-radius:9px;transition:width .3s;}
 .bar-value{width:70px;text-align:right;font-size:12px;color:var(--slate);flex-shrink:0;}
+.nota-card{border:2px solid var(--lime);border-radius:12px;padding:14px 16px;margin:16px 0;background:#fff;}
+.nota-card .nota-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.nota-card .nota-num{font-family:'Anton',sans-serif;font-size:30px;line-height:1;color:var(--lime);}
+.nota-card .nota-row{margin:8px 0;}
+.nota-card .nota-row-lbl{display:flex;justify-content:space-between;font-size:13px;font-weight:700;margin-bottom:4px;}
+.nota-card .nota-bar{height:10px;background:var(--navy-2);border-radius:6px;overflow:hidden;}
+.nota-card .nota-bar > div{height:100%;background:var(--lime);border-radius:6px;transition:width .3s;}
+.nota-card .nota-hint{font-size:12px;color:var(--slate);margin-top:3px;}
 .nota-badge{font-family:'Anton',sans-serif;font-size:16px;padding:2px 10px;border-radius:6px;display:inline-block;}
 .nota-suspenso{background:rgba(140,10,30,0.12);color:var(--coral);}
 .nota-aprobado{background:rgba(200,16,46,0.10);color:var(--lime);}
@@ -183,6 +191,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
       <div class="guide-step"><b>7. Gimnasio en 4.º ESO.</b> Los retos de gimnasio valoran técnica, planificación, constancia y progreso personal. No puntúa levantar más peso que otros ni hacer pruebas de carga máxima.</div>
       <div class="guide-step"><b>8. Cuida la privacidad.</b> No compartas datos de salud ni el inicio o final exactos de tus recorridos.</div>
     </details>
+
+    <div id="miNota" class="nota-card"></div>
 
     <div class="section-title"><h2 style="margin:0;font-size:18px;">Mis retos</h2></div>
     <div id="misRetos" class="grid"></div>
@@ -323,17 +333,17 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
             <div>
               <label>Criterio 1 · Puntos de dificultad acumulados<br>Puntos para nota 10</label>
-              <input type="number" id="umbral10" value="10" min="1" step="0.5" onchange="renderProfesor()">
+              <input type="number" id="umbral10" value="10" min="1" step="0.5" onchange="guardarRubrica();renderProfesor()">
             </div>
             <div>
               <label>Puntos mínimos para aprobar (nota 6)</label>
-              <input type="number" id="umbral6" value="5" min="1" step="0.5" onchange="renderProfesor()">
+              <input type="number" id="umbral6" value="5" min="1" step="0.5" onchange="guardarRubrica();renderProfesor()">
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px;">
             <div>
               <label>Criterio 2 · Retos con evidencia para nota 10</label>
-              <input type="number" id="umbralEvid10" value="5" min="1" step="1" onchange="renderProfesor()">
+              <input type="number" id="umbralEvid10" value="5" min="1" step="1" onchange="guardarRubrica();renderProfesor()">
             </div>
           </div>
           <p class="small">Criterio 2 · Calidad/constancia: número de retos validados con comentario de progreso o registro de actividad (no porcentaje). No se exige grabación.</p>
@@ -1045,8 +1055,36 @@ function cargarTodosLocal(){
   });
 }
 
+/* ======================= CONFIG: RÚBRICA (compartida con el alumnado) ======================= */
+let rubrica = {umbral10:10, umbral6:5, umbralEvid10:5};
+function aplicarRubrica(r){
+  if(r && typeof r==='object'){
+    ['umbral10','umbral6','umbralEvid10'].forEach(k=>{ const v=parseFloat(r[k]); if(v>0) rubrica[k]=v; });
+  }
+  ['umbral10','umbral6','umbralEvid10'].forEach(k=>{ const el=document.getElementById(k); if(el) el.value=rubrica[k]; });
+}
+function cargarRubrica(cb){
+  try{ aplicarRubrica(JSON.parse(localStorage.getItem('retosEF_rubrica')||'null')); }catch(e){}
+  if(fbEnabled){
+    db.ref('retosEF/config/rubrica').once('value').then(snap=>{ aplicarRubrica(snap.val()); cb && cb(); })
+      .catch(()=>{ cb && cb(); });
+  } else { cb && cb(); }
+}
+function guardarRubrica(){
+  rubrica = leerUmbrales();
+  try{ localStorage.setItem('retosEF_rubrica', JSON.stringify(rubrica)); }catch(e){}
+  if(fbEnabled){
+    db.ref('retosEF/config/rubrica').set(rubrica).catch(err=>{
+      console.warn('No se pudo guardar la rúbrica', err);
+      alert('No se ha podido guardar la rúbrica en Firebase. El alumnado seguirá viendo la anterior.');
+    });
+  }
+}
+
 /* ======================= CONFIG: TRIMESTRE ACTIVO ======================= */
 function cargarTrimestreActivo(cb){
+  const cbOriginal = cb;
+  cb = ()=> cargarRubrica(cbOriginal);
   if(fbEnabled){
     db.ref('retosEF/config/trimestreActivo').once('value').then(snap=>{
       trimestreActivo = snap.val() || parseInt(localStorage.getItem('retosEF_trimestre_activo')||'1');
@@ -1312,7 +1350,41 @@ function estadoDe(retoId){
   return 'elegido';
 }
 
+function renderNotaAlumno(){
+  const cont = document.getElementById('miNota');
+  if(!cont || !alumno) return;
+  const {umbral10, umbral6, umbralEvid10} = rubrica;
+  const n = calcularNotaAlumno({retos:misRetosData, propios:misRetosPropiosData}, trimestreActivo, umbral10, umbral6, umbralEvid10);
+  const fmt = x => (Math.round(x*10)/10).toString().replace('.',',');
+  const pct = (v,max) => Math.min(100, Math.round(v/Math.max(0.1,max)*100));
+  let hintPuntos;
+  if(n.puntosAcum < umbral6) hintPuntos = `Te faltan <b>${fmt(umbral6-n.puntosAcum)}</b> punto(s) para aprobar. Sin llegar a ese mínimo la nota no pasa de 4.`;
+  else if(n.puntosAcum < umbral10) hintPuntos = `Ya llegas al mínimo. Te faltan ${fmt(umbral10-n.puntosAcum)} punto(s) para el 10 en este criterio.`;
+  else hintPuntos = '¡Máximo en este criterio!';
+  const hintEvid = n.conEvidencia < umbralEvid10
+    ? `Te faltan ${umbralEvid10-n.conEvidencia} reto(s) con comentario de progreso o registro de actividad para el 10.`
+    : '¡Máximo en este criterio!';
+  cont.innerHTML = `
+    <div class="nota-top">
+      <div><div class="small" style="font-weight:800;text-transform:uppercase;letter-spacing:.5px;">Trimestre ${trimestreActivo} · Nota provisional</div>
+      <div class="small">Criterio 1: ${n.c1} · Criterio 2: ${n.c2} · Nota = media</div></div>
+      <div class="nota-num">${n.notaFinal}</div>
+    </div>
+    <div class="nota-row">
+      <div class="nota-row-lbl"><span>Puntos de dificultad</span><span>${fmt(n.puntosAcum)} / ${fmt(umbral6)} para aprobar · ${fmt(umbral10)} para el 10</span></div>
+      <div class="nota-bar"><div style="width:${pct(n.puntosAcum,umbral10)}%"></div></div>
+      <div class="nota-hint">${hintPuntos}</div>
+    </div>
+    <div class="nota-row">
+      <div class="nota-row-lbl"><span>Retos con evidencia</span><span>${n.conEvidencia} / ${umbralEvid10}</span></div>
+      <div class="nota-bar"><div style="width:${pct(n.conEvidencia,umbralEvid10)}%"></div></div>
+      <div class="nota-hint">${hintEvid}</div>
+    </div>
+    <p class="small" style="margin:8px 0 0;">Solo cuentan los retos <b>validados por el profe</b>. La nota definitiva la pone el profesor.</p>`;
+}
+
 function renderAlumno(){
+  renderNotaAlumno();
   const retosTrimestre = RETOS.filter(r=>r.trimestre===trimestreActivo && !r.deprecated && (!r.cursos || r.cursos.includes(alumno.curso)));
   document.getElementById('alumnoInfo').textContent = alumno.nombre + ' · ' + alumno.curso + ' ' + alumno.clase + ' · Trimestre ' + trimestreActivo;
   const total = retosTrimestre.filter(r=>{
@@ -1900,7 +1972,7 @@ function redondearNotaDiscreta(n){
 }
 
 function calcularNotaAlumno(a, t, umbral10, umbral6, umbralEvid10){
-  const retosIds = Object.keys(a.retos||{}).filter(retoEnTrimestreFiltro);
+  const retosIds = Object.keys(a.retos||{}).filter(id=>{ const r=RETOS.find(x=>x.id==id); return r && r.trimestre===t; });
   const retos = retosIds.map(id=>a.retos[id]);
   const propios = Object.values(a.propios||{}).filter(r=>r.trimestre===t && r.estadoAprobacion==='aprobado');
   const validados = retos.filter(d=>d.validadoProfe);
@@ -1930,14 +2002,14 @@ function calcularNotaAlumno(a, t, umbral10, umbral6, umbralEvid10){
   let notaFinal = redondearNotaDiscreta((c1+c2)/2);
   if(puntosAcum < umbral6) notaFinal = Math.min(notaFinal, 4);
 
-  return {nValidados, puntosAcum: Math.round(puntosAcum*10)/10, c1, c2, notaFinal};
+  return {nValidados, puntosAcum: Math.round(puntosAcum*10)/10, conEvidencia, c1, c2, notaFinal};
 }
 
 function leerUmbrales(){
   return {
-    umbral10: parseFloat(document.getElementById('umbral10').value) || 10,
-    umbral6: parseFloat(document.getElementById('umbral6').value) || 5,
-    umbralEvid10: parseFloat(document.getElementById('umbralEvid10').value) || 5
+    umbral10: parseFloat((document.getElementById('umbral10')||{}).value) || rubrica.umbral10,
+    umbral6: parseFloat((document.getElementById('umbral6')||{}).value) || rubrica.umbral6,
+    umbralEvid10: parseFloat((document.getElementById('umbralEvid10')||{}).value) || rubrica.umbralEvid10
   };
 }
 
