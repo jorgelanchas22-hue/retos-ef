@@ -97,6 +97,19 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
 .help-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;}
 .help-box summary{cursor:pointer;font-weight:800;color:var(--lime);}
 .proposal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;}
+.proposal-card.con-aviso{border-left:5px solid var(--lime);background:rgba(200,16,46,0.03);}
+.avisos-card{border:2px solid var(--lime);background:rgba(200,16,46,0.04);border-radius:14px;padding:14px 16px;margin:14px 0 6px;}
+.avisos-card h3{margin:0 0 6px;font-size:15px;}
+.aviso-item{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;}
+.aviso-sec{margin-top:12px;}
+.aviso-sec b{font-size:13px;}
+.tab-badge{display:inline-block;min-width:18px;padding:1px 6px;margin-left:6px;border-radius:999px;background:var(--lime);color:#fff;font-size:11px;font-weight:700;line-height:16px;text-align:center;}
+.chip-aviso{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700;margin:4px 6px 0 0;}
+.chip-pend{background:var(--lime);color:#fff;}
+.chip-nuevo{background:rgba(200,16,46,0.12);color:var(--coral);}
+.chip-propio{background:rgba(140,10,30,0.10);color:var(--coral);font-size:10px;padding:1px 6px;border-radius:999px;font-weight:700;margin-right:4px;}
+.stat-click{cursor:pointer;}
+.stat-click:hover{outline:2px solid var(--lime);}
 .proposal-status{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 8px;border-radius:20px;margin-top:8px;}
 .status-pending{background:#fff4d6;color:#7a5a00;}
 .status-approved{background:rgba(200,16,46,.10);color:var(--lime);}
@@ -255,6 +268,8 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
         </select>
       </div>
 
+      <div id="avisosProfesor"></div>
+
       <div class="tabs">
         <div class="tab active" id="tabResumen" onclick="cambiarTabProfe('resumen')">Resumen</div>
         <div class="tab" id="tabRegistro" onclick="cambiarTabProfe('registro')">Registro</div>
@@ -277,7 +292,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
             <div class="small">Retos elegidos</div>
             <div class="display" style="font-size:26px;" id="statElegidos">0</div>
           </div>
-          <div class="card" style="padding:14px;">
+          <div class="card stat-click" style="padding:14px;" onclick="irAPendientes()" title="Ver los retos pendientes de validar">
             <div class="small">Completados (sin validar)</div>
             <div class="display" style="font-size:26px;" id="statCompletados">0</div>
           </div>
@@ -1032,12 +1047,20 @@ function syncFirebase(){
     });
 }
 
+let refAlumnosProfe = null;
 function cargarTodosParaProfesor(cb){
   if(fbEnabled){
-    db.ref('retosEF/alumnos').once('value').then(snap=>{
-      todosAlumnosData = snap.val() || {};
-      cb();
-    }).catch(()=>{ cargarTodosLocal(); cb(); });
+    if(refAlumnosProfe){ refAlumnosProfe.off(); }
+    refAlumnosProfe = db.ref('retosEF/alumnos');
+    let primera = true;
+    cargarVistoProfe(()=>{
+      refAlumnosProfe.on('value', snap=>{
+        todosAlumnosData = snap.val() || {};
+        detectarNuevosAvisos(primera);
+        primera = false;
+        if(esProfesor) cb();
+      }, ()=>{ cargarTodosLocal(); cb(); });
+    });
   } else {
     cargarTodosLocal();
     cb();
@@ -1314,6 +1337,8 @@ function guardarTrimestreActivoUI(){
 }
 
 function logout(){
+  if(refAlumnosProfe){ refAlumnosProfe.off(); refAlumnosProfe = null; }
+  avisosConocidos = null; document.title = TITULO_BASE;
   alumno = null; esProfesor = false; misRetosData = {}; misRetosPropiosData = {};
   if(fbEnabled && auth && auth.currentUser){ auth.signOut(); }
   localStorage.removeItem('retosEF_sesion');
@@ -1674,7 +1699,156 @@ function retoEnTrimestreFiltro(retoId){
   return reto && reto.trimestre===t;
 }
 
+/* ======================= AVISOS DOCENTE ======================= */
+const TITULO_BASE = document.title;
+let profeVistoHasta = '';
+let avisosConocidos = null;
+function cargarVistoProfe(cb){
+  try{ profeVistoHasta = localStorage.getItem('retosEF_profeVistoHasta') || ''; }catch(e){}
+  if(fbEnabled && db){
+    db.ref('retosEF/config/profeVistoHasta').once('value').then(s=>{
+      const v=s.val(); if(v && v>profeVistoHasta) profeVistoHasta=v; cb&&cb();
+    }).catch(()=>cb&&cb());
+  } else { cb&&cb(); }
+}
+function marcarTodoVisto(){
+  profeVistoHasta = new Date().toISOString();
+  try{ localStorage.setItem('retosEF_profeVistoHasta', profeVistoHasta); }catch(e){}
+  if(fbEnabled && db) db.ref('retosEF/config/profeVistoHasta').set(profeVistoHasta).catch(()=>{});
+  renderProfesor();
+}
+function haceCuanto(iso){
+  if(!iso) return '';
+  const min=Math.round((Date.now()-new Date(iso).getTime())/60000);
+  if(min<1) return 'ahora mismo';
+  if(min<60) return 'hace '+min+' min';
+  const h=Math.round(min/60); if(h<24) return 'hace '+h+' h';
+  const d=Math.round(h/24); if(d===1) return 'ayer';
+  if(d<7) return 'hace '+d+' días';
+  return new Date(iso).toLocaleDateString('es-ES',{day:'numeric',month:'short'});
+}
+function recogerActividad(){
+  const pendientes=[], propuestas=[], novedades={};
+  const addNov=(alId,a,texto,fecha)=>{
+    if(!fecha || fecha<=profeVistoHasta) return;
+    const n = novedades[alId] = novedades[alId] || {alId,a,items:[],ultima:''};
+    n.items.push({texto,fecha}); if(fecha>n.ultima) n.ultima=fecha;
+  };
+  Object.entries(todosAlumnosData||{}).forEach(([alId,a])=>{
+    if(!a || !a.info) return;
+    Object.entries(a.retos||{}).forEach(([retoId,d])=>{
+      if(!d) return;
+      const reto=RETOS.find(r=>r.id==retoId);
+      const titulo='#'+retoId+(reto?' · '+reto.texto.slice(0,55)+'…':'');
+      if(d.estado==='completado' && !d.validadoProfe) pendientes.push({alId,a,tipo:'catalogo',id:retoId,titulo,d});
+      const accion = d.estado==='completado' ? 'Terminó el reto #'+retoId : ((d.comentario||d.actividadUrl) ? 'Registró progreso en #'+retoId : 'Eligió el reto #'+retoId);
+      addNov(alId,a,accion,d.fecha);
+    });
+    Object.entries(a.propios||{}).forEach(([pid,r])=>{
+      if(!r) return;
+      const titulo='Reto propio · '+(r.titulo||'');
+      if(r.estadoAprobacion==='pendiente') propuestas.push({alId,a,tipo:'propio',id:r.id||pid,titulo,d:r});
+      else if(r.estadoAprobacion==='aprobado' && r.estado==='completado' && !r.validadoProfe) pendientes.push({alId,a,tipo:'propio',id:r.id||pid,titulo,d:r});
+      const accion = r.estadoAprobacion==='pendiente' ? 'Propuso un reto propio' : (r.estado==='completado' ? 'Terminó su reto propio' : 'Actualizó su reto propio');
+      addNov(alId,a,accion,r.fecha);
+    });
+  });
+  Object.values(novedades).forEach(n=>n.items.sort((x,y)=>y.fecha.localeCompare(x.fecha)));
+  pendientes.sort((x,y)=>(y.d.fecha||'').localeCompare(x.d.fecha||''));
+  return {pendientes, propuestas, novedades};
+}
+function claveAviso(x){ return x.alId+'|'+x.tipo+'|'+x.id; }
+function detectarNuevosAvisos(primera){
+  const act = recogerActividad();
+  const lista = act.pendientes.concat(act.propuestas);
+  const claves = new Set(lista.map(claveAviso));
+  if(!primera && avisosConocidos){
+    const nuevos = lista.filter(x=>!avisosConocidos.has(claveAviso(x)));
+    nuevos.forEach(x=>{
+      const msg = x.a.info.nombre+' ('+x.a.info.curso+' '+x.a.info.clase+'): '+(x.d.estadoAprobacion==='pendiente' ? 'ha propuesto un reto propio' : 'ha terminado un reto y está pendiente de validar');
+      mostrarToast('🔔 '+msg, 7000);
+      try{
+        if('Notification' in window && Notification.permission==='granted'){
+          new Notification('Retos EF · aviso', {body: msg + '\n' + x.titulo});
+        }
+      }catch(e){}
+    });
+  }
+  avisosConocidos = claves;
+  document.title = (lista.length ? '('+lista.length+') ' : '') + TITULO_BASE;
+}
+function activarNotificaciones(){
+  if(!('Notification' in window)){ mostrarToast('Este navegador no admite avisos.',4000); return; }
+  Notification.requestPermission().then(p=>{
+    mostrarToast(p==='granted' ? 'Avisos activados: te avisaré mientras tengas el panel abierto.' : 'No se han activado los avisos del navegador.',5000);
+    renderAvisosProfesor();
+  });
+}
+function irAPendientes(){
+  const f=document.getElementById('fEstado'); if(f) f.value='completado';
+  document.getElementById('fTrimestre').value='';
+  cambiarTabProfe('registro'); renderProfesor();
+}
+function ponerBadgeTab(id, texto, n){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML = texto + (n ? '<span class="tab-badge">'+n+'</span>' : '');
+}
+function renderAvisosProfesor(){
+  const cont=document.getElementById('avisosProfesor'); if(!cont) return;
+  const act=recogerActividad();
+  const nov=Object.values(act.novedades).sort((x,y)=>y.ultima.localeCompare(x.ultima));
+  const pendCat=act.pendientes.filter(x=>x.tipo==='catalogo').length;
+  const pendProp=act.pendientes.filter(x=>x.tipo==='propio').length;
+  ponerBadgeTab('tabRegistro','Registro',pendCat+pendProp);
+  ponerBadgeTab('tabPropios','Retos del alumnado',pendProp+act.propuestas.length);
+  ponerBadgeTab('tabCarpetas','Carpetas',nov.length);
+  const permiso = ('Notification' in window) ? Notification.permission : 'no';
+  const btnNotif = permiso==='default' ? '<button class="btn btn-ghost btn-sm" onclick="activarNotificaciones()">🔔 Activar avisos del navegador</button>' : (permiso==='granted' ? '<span class="small">🔔 Avisos del navegador activados</span>' : '');
+  if(!act.pendientes.length && !act.propuestas.length && !nov.length){
+    cont.innerHTML='<div class="avisos-card" style="border-width:1px;"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;"><span class="small">✅ Todo al día: no hay retos por validar, propuestas por aprobar ni novedades.</span>'+btnNotif+'</div></div>';
+    return;
+  }
+  let h='<div class="avisos-card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;"><h3>🔔 Avisos</h3>'+btnNotif+'</div>';
+  if(act.pendientes.length){
+    h+='<div class="aviso-sec"><b>Pendientes de validar ('+act.pendientes.length+')</b>';
+    act.pendientes.forEach((x,i)=>{
+      h+='<div class="aviso-item"><div><b>'+escaparTexto(x.a.info.nombre)+'</b> <span class="small">'+escaparTexto(x.a.info.curso+' '+x.a.info.clase)+' · '+haceCuanto(x.d.fecha)+'</span><br>'+
+        (x.tipo==='propio'?'<span class="chip-propio">PROPIO</span>':'')+'<span class="small">'+escaparTexto(x.titulo)+'</span>'+
+        (x.d.comentario?'<br><span class="small"><i>«'+escaparTexto(x.d.comentario)+'»</i></span>':'')+htmlActividad(x.d)+'</div>'+
+        '<button class="btn btn-lime btn-sm" onclick="validarDesdeAviso('+i+')">Validar</button></div>';
+    });
+    h+='</div>';
+  }
+  if(act.propuestas.length){
+    h+='<div class="aviso-sec"><b>Retos propios por aprobar ('+act.propuestas.length+')</b>';
+    act.propuestas.forEach(x=>{
+      h+='<div class="aviso-item"><div><b>'+escaparTexto(x.a.info.nombre)+'</b> <span class="small">'+escaparTexto(x.a.info.curso+' '+x.a.info.clase)+' · '+haceCuanto(x.d.fecha)+'</span><br><span class="small">'+escaparTexto(x.titulo)+'</span></div>'+
+        '<button class="btn btn-ghost btn-sm" onclick="document.getElementById(\'fTrimestre\').value=\'\';cambiarTabProfe(\'propios\');renderProfesor();">Revisar</button></div>';
+    });
+    h+='</div>';
+  }
+  if(nov.length){
+    h+='<div class="aviso-sec"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;"><b>Novedades del alumnado'+(profeVistoHasta?' desde '+haceCuanto(profeVistoHasta):'')+' ('+nov.length+')</b><button class="btn btn-ghost btn-sm" onclick="marcarTodoVisto()">Marcar como visto</button></div>';
+    nov.slice(0,12).forEach(n=>{
+      h+='<div class="aviso-item"><div><b>'+escaparTexto(n.a.info.nombre)+'</b> <span class="small">'+escaparTexto(n.a.info.curso+' '+n.a.info.clase)+'</span><br><span class="small">'+n.items.slice(0,3).map(it=>escaparTexto(it.texto)+' · '+haceCuanto(it.fecha)).join('<br>')+(n.items.length>3?'<br>y '+(n.items.length-3)+' más…':'')+'</span></div></div>';
+    });
+    if(nov.length>12) h+='<p class="small" style="margin:8px 0 0;">…y '+(nov.length-12)+' alumnos más (los verás arriba en la pestaña Carpetas).</p>';
+    h+='</div>';
+  }
+  h+='</div>';
+  cont.innerHTML=h;
+  cont._pendientes=act.pendientes;
+}
+function validarDesdeAviso(i){
+  const cont=document.getElementById('avisosProfesor');
+  const x=(cont._pendientes||[])[i]; if(!x) return;
+  if(x.tipo==='propio') validarRetoPropio(x.alId,x.id);
+  else validarReto(x.alId,x.id);
+  mostrarToast('Validado: '+x.a.info.nombre,2500);
+}
+
 function renderProfesor(){
+  renderAvisosProfesor();
   renderRegistro();
   renderResumen();
   renderEvaluacion();
@@ -1783,15 +1957,22 @@ function renderCarpetasProfesor(){
       });
     });
   });
-  alumnos.sort((a,b)=>a.info.curso.localeCompare(b.info.curso) || a.info.clase.localeCompare(b.info.clase) || a.info.nombre.localeCompare(b.info.nombre));
+  const act = recogerActividad();
+  alumnos.forEach(a=>{
+    const alId=slug(a.info.nombre,a.info.curso,a.info.clase);
+    a._pend = act.pendientes.filter(x=>x.alId===alId).length + act.propuestas.filter(x=>x.alId===alId).length;
+    a._nov = act.novedades[alId] || null;
+  });
+  alumnos.sort((a,b)=>((b._pend?2:0)+(b._nov?1:0))-((a._pend?2:0)+(a._nov?1:0)) || (b._nov&&a._nov ? b._nov.ultima.localeCompare(a._nov.ultima) : 0) || a.info.curso.localeCompare(b.info.curso) || a.info.clase.localeCompare(b.info.clase) || a.info.nombre.localeCompare(b.info.nombre));
   alumnos.forEach(a=>{
     const key=a.info.curso+'_'+a.info.clase+'|'+a.info.nombre;
     const driveUrl=DRIVE_CARPETAS_ALUMNOS[key]||'';
     const total=Object.keys(a.retos||{}).length+Object.keys(a.propios||{}).length;
     const valid=Object.values(a.retos||{}).filter(x=>x.validadoProfe).length+Object.values(a.propios||{}).filter(x=>x.validadoProfe).length;
     const card=document.createElement('div');
-    card.className='proposal-card';
-    card.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><div><b>'+a.info.nombre+'</b><div class="small">'+a.info.curso+' '+a.info.clase+' · '+total+' retos registrados · '+valid+' validados</div></div>'+
+    card.className='proposal-card'+((a._pend||a._nov)?' con-aviso':'');
+    const chips=(a._pend?'<span class="chip-aviso chip-pend">⏳ '+a._pend+' por revisar</span>':'')+(a._nov?'<span class="chip-aviso chip-nuevo">🆕 '+escaparTexto(a._nov.items[0].texto)+' · '+haceCuanto(a._nov.ultima)+'</span>':'');
+    card.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap;"><div><b>'+a.info.nombre+'</b><div class="small">'+a.info.curso+' '+a.info.clase+' · '+total+' retos registrados · '+valid+' validados</div>'+chips+'</div>'+
       (driveUrl?'<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="'+driveUrl+'">📁 Abrir Drive</a>':'<span class="small">Carpeta Drive no localizada</span>')+'</div>'+
       '<details class="help-box" style="margin-top:10px;"><summary>Ver historial en la app</summary>'+historialProfesorHTML(a)+'</details>';
     cont.appendChild(card);
@@ -1888,7 +2069,29 @@ function renderRegistro(){
       }
       tbody.appendChild(tr);
     });
+    // Retos personales (propuestos por el alumno y ya aprobados)
+    const t = trimestreFiltro();
+    Object.values(a.propios||{}).forEach(r=>{
+      if(!r || r.estadoAprobacion!=='aprobado') return;
+      if(t!==null && r.trimestre!==t) return;
+      const est = r.validadoProfe ? 'validado' : (r.estado==='completado' ? 'completado' : 'elegido');
+      if(fEstado && est !== fEstado) return;
+      const color = est==='validado' ? 'var(--lime)' : est==='completado' ? 'var(--coral)' : 'var(--slate)';
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>'+escaparTexto(a.info.nombre)+'</td><td>'+escaparTexto(a.info.curso)+' '+escaparTexto(a.info.clase)+'</td>'+
+        '<td><span class="chip-propio">PROPIO</span>'+escaparTexto((r.titulo||'').slice(0,40))+(r.puntos?' · '+r.puntos+' pts':'')+'</td>'+
+        '<td><span class="status-dot" style="background:'+color+'"></span>'+est+'</td>'+
+        '<td>'+(r.comentario?escaparTexto(r.comentario):'—')+'</td><td>'+(htmlActividad(r)||'—')+'</td><td></td>';
+      if(est==='completado'){
+        const btn = document.createElement('button');
+        btn.className='btn btn-lime btn-sm'; btn.textContent='Validar';
+        btn.onclick=()=>validarRetoPropio(alId, r.id);
+        tr.lastElementChild.appendChild(btn);
+      }
+      tbody.appendChild(tr);
+    });
   });
+  if(!tbody.children.length) tbody.innerHTML='<tr><td colspan="7" class="small" style="text-align:center;padding:18px;">No hay retos en este filtro.</td></tr>';
 }
 
 function pintarBarras(contenedorId, items, maxVal){
@@ -2090,6 +2293,13 @@ function exportCSV(){
       const reto = RETOS.find(r=>r.id==retoId);
       const est = d.validadoProfe ? 'validado' : (d.estado==='completado' ? 'completado' : 'elegido');
       const links=[d.actividadUrl].filter(Boolean).join(' | '); rows.push([a.info.nombre, a.info.curso, a.info.clase, '#'+retoId, reto?reto.cat:'', est, (d.comentario||'').replace(/,/g,';'), links.replace(/,/g,';'), d.fecha||'']);
+    });
+    const t = trimestreFiltro();
+    Object.values(a.propios||{}).forEach(r=>{
+      if(!r || r.estadoAprobacion!=='aprobado') return;
+      if(t!==null && r.trimestre!==t) return;
+      const est = r.validadoProfe ? 'validado' : (r.estado==='completado' ? 'completado' : 'elegido');
+      rows.push([a.info.nombre, a.info.curso, a.info.clase, 'PROPIO: '+(r.titulo||'').replace(/,/g,';'), r.categoria||'', est, (r.comentario||'').replace(/,/g,';'), (r.actividadUrl||'').replace(/,/g,';'), r.fecha||'']);
     });
   });
   const csv = rows.map(r=>r.join(',')).join('\n');
