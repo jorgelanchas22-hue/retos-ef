@@ -95,6 +95,15 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
 .nota-aprobado{background:rgba(200,16,46,0.10);color:var(--lime);}
 
 .help-box{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px;}
+.rp-guia{margin:0 0 12px;}
+.rp-ej{border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13px;line-height:1.45;}
+.rp-mal{background:rgba(180,35,47,0.08);border-left:4px solid #b4232f;}
+.rp-bien{background:rgba(31,122,77,0.09);border-left:4px solid #1f7a4d;}
+.rp-lista{margin:0 0 8px;padding-left:18px;}
+.rp-lista li{margin-bottom:2px;}
+.rp-check{margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.04);font-size:13px;display:grid;gap:3px;}
+.rp-check .ok{color:#1f7a4d;} .rp-check .ko{color:#b4232f;}
+.rp-check .rp-res{font-weight:800;margin-top:4px;}
 .help-box summary{cursor:pointer;font-weight:800;color:var(--lime);}
 .proposal-card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px;}
 .proposal-card.con-aviso{border-left:5px solid var(--lime);background:rgba(200,16,46,0.03);}
@@ -196,7 +205,7 @@ th{color:var(--slate);text-transform:uppercase;font-size:11px;letter-spacing:0.5
     <details class="help-box">
       <summary>¿Cómo funciona Retos EF?</summary>
       <div class="guide-step"><b>1. Elige o propón.</b> Puedes escoger un reto del banco de tu curso o proponer uno propio.</div>
-      <div class="guide-step"><b>2. Si propones uno propio, lo aprueba el profesor.</b> Hasta que no esté aprobado no puntúa.</div>
+      <div class="guide-step"><b>2. Si propones uno propio, lo aprueba el profesor.</b> Hasta que no esté aprobado no puntúa. Un buen reto tiene: punto de partida con un número, meta con un número, plazo, plan concreto y forma de demostrarlo.</div>
       <div class="guide-step"><b>3. Registra tu progreso.</b> Describe qué has hecho y qué has mejorado. Puedes añadir opcionalmente un registro de actividad o captura.</div>
       <div class="guide-step"><b>4. Strava y otras apps son opcionales.</b> No necesitas crear una cuenta para participar. Si usas una app deportiva, evita compartir públicamente tu domicilio, el inicio/final exactos de una ruta o datos de salud innecesarios.</div>
       <div class="guide-step"><b>5. Sin grabaciones.</b> No es necesario grabarse ni aparecer en imágenes para demostrar un reto. Basta con describir el progreso.</div>
@@ -501,25 +510,63 @@ Juan López Ruiz
 <div id="modalRetoPropio" class="modal-bg hidden">
   <div class="modal">
     <h3 style="margin-top:0;">Propón tu propio reto</h3>
-    <p class="small">Debe ser concreto, seguro, realizable y relacionado con actividad física, deporte, condición física o hábitos activos.</p>
-    <label>Título del reto</label>
-    <input id="rpTitulo" maxlength="80" placeholder="Ej: Mejorar mi carrera de 2 km">
-    <label>¿Qué quieres conseguir?</label>
-    <textarea id="rpObjetivo" rows="2" placeholder="Describe el objetivo de forma concreta."></textarea>
-    <label>¿Por qué este reto es un reto para ti?</label>
-    <textarea id="rpPorQue" rows="2" placeholder="Explica brevemente tu punto de partida o dificultad personal."></textarea>
-    <label>¿Cómo vas a trabajarlo?</label>
-    <textarea id="rpPlan" rows="2" placeholder="Sesiones, práctica, duración aproximada..."></textarea>
-    <label>Categoría</label>
+    <details class="help-box rp-guia" id="rpGuia">
+      <summary>📋 Cómo crear un buen reto (léelo antes)</summary>
+      <p class="small" style="margin:8px 0;">Un reto no es una buena intención. Es una <b>meta con un número</b>, un <b>plazo</b>, un <b>plan</b> y una <b>forma de demostrarlo</b>.</p>
+      <div class="rp-ej rp-mal"><b>✗ Así no</b><br>«Superar mis pruebas físicas». Por qué: «me voy a esforzar». Plan: «esforzándome».</div>
+      <div class="rp-ej rp-bien"><b>✓ Así sí</b><br>Ahora hago <b>25 abdominales</b> en 1 minuto. Quiero llegar a <b>40</b> en <b>4 semanas</b>. Entrenaré <b>3 días</b> por semana: 4 series de 30 segundos y cada viernes me cronometro. Lo demuestro con mi registro semanal.</div>
+      <p class="small" style="margin:8px 0 2px;"><b>Te lo devolverán si:</b></p>
+      <ul class="small rp-lista">
+        <li>Usas palabras sin número: «mejorar», «esforzarme», «superarme».</li>
+        <li>Tu plan es «entrenarlo» o «cada día» sin decir qué haces.</li>
+        <li>La meta es imposible o te puede lesionar (100 m en 8 segundos sería récord del mundo).</li>
+        <li>Es algo que ya haces sin esfuerzo.</li>
+        <li>Lo escribes para «la persona que lo haga»: el reto es <b>tuyo</b>.</li>
+      </ul>
+      <button type="button" class="link-btn" onclick="rellenarEjemploReto()">Ver el ejemplo rellenado en el formulario</button>
+    </details>
+
+    <label for="rpTitulo">Título del reto</label>
+    <input id="rpTitulo" maxlength="80" placeholder="Ej: Mi primer kilómetro sin parar" oninput="revisarRetoPropio()">
+    <label for="rpPartida">1 · Punto de partida: ¿qué haces HOY? (con un número)</label>
+    <textarea id="rpPartida" rows="2" placeholder="Ej: Ahora corro 5 minutos y tengo que parar a andar." oninput="revisarRetoPropio()"></textarea>
+    <label for="rpMeta">2 · Meta: ¿qué quieres conseguir? (con un número)</label>
+    <textarea id="rpMeta" rows="2" placeholder="Ej: Correr 1 km seguido sin parar." oninput="revisarRetoPropio()"></textarea>
+    <div style="display:flex;gap:10px;">
+      <div style="flex:1;min-width:0;">
+        <label for="rpSemanas">3 · Plazo</label>
+        <select id="rpSemanas" onchange="revisarRetoPropio()">
+          <option value="">Elige…</option><option value="2">2 semanas</option><option value="3">3 semanas</option><option value="4">4 semanas</option><option value="5">5 semanas</option><option value="6">6 semanas</option><option value="8">8 semanas</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <label for="rpDias">Días por semana</label>
+        <select id="rpDias" onchange="revisarRetoPropio()">
+          <option value="">Elige…</option><option value="1">1 día</option><option value="2">2 días</option><option value="3">3 días</option><option value="4">4 días</option><option value="5">5 días</option>
+        </select>
+      </div>
+    </div>
+    <label for="rpPlan">4 · Plan: ¿qué harás en cada sesión y cuánto rato?</label>
+    <textarea id="rpPlan" rows="3" placeholder="Ej: Método CACO: alterno correr y andar. Empiezo con 2 min corriendo + 1 andando, 20 minutos. Cada semana subo 1 minuto corriendo." oninput="revisarRetoPropio()"></textarea>
+    <label for="rpPrueba">5 · ¿Cómo lo vas a demostrar?</label>
+    <select id="rpPrueba" onchange="revisarRetoPropio()">
+      <option value="">Elige…</option>
+      <option>Captura del reloj o de una app deportiva</option>
+      <option>Foto del resultado (sin salir yo)</option>
+      <option>Registro semanal escrito de mis marcas</option>
+      <option>Un adulto lo comprueba y lo confirma</option>
+    </select>
+    <label for="rpCategoria">Categoría</label>
     <select id="rpCategoria">
       <option value="Condición Física">Condición Física</option>
       <option value="Deportes">Deportes</option>
       <option id="rpCatGym" value="Gimnasio y entrenamiento">Gimnasio y entrenamiento</option>
       <option value="Hábitos saludables">Hábitos saludables</option>
     </select>
+    <div class="rp-check" id="rpCheck" aria-live="polite"></div>
     <div style="display:flex;gap:10px;margin-top:8px;">
       <button class="btn btn-ghost" style="flex:1;" onclick="cerrarModalRetoPropio()">Cancelar</button>
-      <button class="btn btn-lime" style="flex:1;" onclick="guardarPropuestaReto()">Enviar propuesta</button>
+      <button class="btn btn-lime" style="flex:1;" id="rpEnviar" onclick="guardarPropuestaReto()">Enviar propuesta</button>
     </div>
   </div>
 </div>
@@ -1620,23 +1667,58 @@ function guardarEvidencia(){
     .finally(()=>renderAlumno());
 }
 
+const RP_CAMPOS=['rpTitulo','rpPartida','rpMeta','rpSemanas','rpDias','rpPlan','rpPrueba'];
 function abrirModalRetoPropio(){
-  ['rpTitulo','rpObjetivo','rpPorQue','rpPlan'].forEach(id=>document.getElementById(id).value='');
+  RP_CAMPOS.forEach(id=>document.getElementById(id).value='');
   document.getElementById('rpCategoria').value='Condición Física';
   const gymOpt=document.getElementById('rpCatGym');
   if(gymOpt) gymOpt.hidden = !alumno || alumno.curso!=='4ESO';
+  const yaPropuso=Object.keys(misRetosPropiosData||{}).length>0;
+  document.getElementById('rpGuia').open=!yaPropuso;
+  revisarRetoPropio();
   document.getElementById('modalRetoPropio').classList.remove('hidden');
 }
 function cerrarModalRetoPropio(){ document.getElementById('modalRetoPropio').classList.add('hidden'); }
+function rellenarEjemploReto(){
+  const ej={rpTitulo:'Mi primer kilómetro sin parar',rpPartida:'Ahora corro unos 5 minutos y tengo que parar a andar.',rpMeta:'Correr 1 km seguido sin parar.',rpSemanas:'4',rpDias:'3',rpPlan:'Método CACO: alterno correr y andar durante 20 minutos. Empiezo con 2 min corriendo + 1 andando y cada semana subo 1 minuto corriendo.',rpPrueba:'Captura del reloj o de una app deportiva'};
+  Object.keys(ej).forEach(k=>document.getElementById(k).value=ej[k]);
+  document.getElementById('rpGuia').open=false;
+  revisarRetoPropio();
+  mostrarToast('Esto es solo un ejemplo: cámbialo por tu reto.',3000);
+}
+function revisarRetoPropio(){
+  const v=id=>(document.getElementById(id).value||'').trim();
+  const tieneNum=t=>/\d/.test(t)||/\b(un|una|uno|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|media|medio)\b/i.test(t);
+  const vago=/^(mejorar|esforz|superar|entren|practic|hacerlo|haciendolo|haciéndolo|cada d[ií]a)/i;
+  const plan=v('rpPlan'), todo=(v('rpTitulo')+' '+v('rpMeta')+' '+plan).toLowerCase();
+  const checks=[
+    [v('rpTitulo').length>=4,'Tiene título'],
+    [v('rpPartida').length>=10&&tieneNum(v('rpPartida')),'Punto de partida con un número (lo que haces hoy)'],
+    [v('rpMeta').length>=8&&tieneNum(v('rpMeta')),'Meta con un número (tiempo, distancia, repeticiones, nivel…)'],
+    [!!v('rpSemanas')&&!!v('rpDias'),'Plazo y días por semana'],
+    [plan.length>=30&&!(vago.test(plan)&&plan.length<45),'Plan concreto: qué haces en cada sesión y cuánto rato'],
+    [!!v('rpPrueba'),'Forma de demostrarlo'],
+    [!/(la persona que|el que lo haga|quien lo haga|la gente que)/.test(todo),'Escrito en primera persona (el reto es tuyo)']
+  ];
+  const n=checks.filter(c=>c[0]).length;
+  const box=document.getElementById('rpCheck');
+  box.innerHTML=checks.map(c=>'<span class="'+(c[0]?'ok':'ko')+'">'+(c[0]?'✓ ':'○ ')+c[1]+'</span>').join('')+
+    '<span class="rp-res">'+n+' de '+checks.length+(n===checks.length?' · ¡Listo para enviar!':' · Todavía no está listo')+'</span>';
+  const btn=document.getElementById('rpEnviar');
+  btn.disabled=n!==checks.length; btn.style.opacity=btn.disabled?'.5':'';
+  return n===checks.length;
+}
 function guardarPropuestaReto(){
-  const titulo=document.getElementById('rpTitulo').value.trim();
-  const objetivo=document.getElementById('rpObjetivo').value.trim();
-  const porQue=document.getElementById('rpPorQue').value.trim();
-  const plan=document.getElementById('rpPlan').value.trim();
+  if(!revisarRetoPropio()){ alert('A tu reto le falta algo. Revisa la lista de abajo: todo tiene que estar en verde.'); return; }
+  const v=id=>document.getElementById(id).value.trim();
+  const titulo=v('rpTitulo'), puntoPartida=v('rpPartida'), meta=v('rpMeta');
+  const semanas=+v('rpSemanas'), diasSemana=+v('rpDias'), planDetalle=v('rpPlan'), prueba=v('rpPrueba');
   const categoria=document.getElementById('rpCategoria').value;
-  if(!titulo||!objetivo||!porQue||!plan){ alert('Completa título, objetivo, por qué supone un reto y cómo vas a trabajarlo.'); return; }
+  const objetivo=meta+' (en '+semanas+' semanas)';
+  const porQue='Ahora mismo: '+puntoPartida;
+  const plan=diasSemana+' día'+(diasSemana>1?'s':'')+' por semana: '+planDetalle+' · Prueba: '+prueba;
   const id='p_'+Date.now().toString(36);
-  misRetosPropiosData[id]={id,titulo,objetivo,porQue,plan,categoria,trimestre:trimestreActivo,estadoAprobacion:'pendiente',estado:'propuesto',puntos:0,comentarioProfe:'',comentario:'',validadoProfe:false,fecha:new Date().toISOString()};
+  misRetosPropiosData[id]={id,titulo,objetivo,porQue,plan,puntoPartida,meta,semanas,diasSemana,planDetalle,prueba,categoria,trimestre:trimestreActivo,estadoAprobacion:'pendiente',estado:'propuesto',puntos:0,comentarioProfe:'',comentario:'',validadoProfe:false,fecha:new Date().toISOString()};
   guardarLocal();
   cerrarModalRetoPropio();
   mostrarToast('Guardando en la nube…',8000);
